@@ -5,6 +5,7 @@ UI-Tab: Media Renamer
 import asyncio
 import os
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 from nicegui import ui
 
@@ -12,6 +13,15 @@ from app.core.renamer import collect_files, process_files
 from app.ui.utils import pick_folder
 
 _executor = ThreadPoolExecutor(max_workers=1)
+
+
+def _short_path(path: str, folder: str) -> str:
+    """Pfad relativ zum Parent des Scan-Ordners."""
+    base = Path(folder).parent
+    try:
+        return str(Path(path).relative_to(base))
+    except ValueError:
+        return "/".join(Path(path).parts[-4:])
 
 
 def build(tab_panel):
@@ -31,11 +41,13 @@ def build(tab_panel):
 
             ui.button("Ordner wählen", on_click=on_pick, icon="folder_open")
 
-        # ── Status / Ergebnis ──────────────────────────────────────────
-        status_label = ui.label("").classes("text-slate-500 text-sm")
-        preview_col = ui.column().classes("w-full gap-2")
+        # ── Status + Spinner ───────────────────────────────────────────
+        with ui.row().classes("items-center gap-3 mt-2"):
+            spinner = ui.spinner(size="sm").classes("text-slate-400")
+            spinner.visible = False
+            status_label = ui.label("").classes("text-slate-500 text-sm")
 
-        # Zwischenspeicher für Vorschau-Daten
+        preview_col = ui.column().classes("w-full gap-2 mt-2")
         _state: dict = {"files": None, "has_preview": False}
 
         # ── Vorschau ───────────────────────────────────────────────────
@@ -48,6 +60,7 @@ def build(tab_panel):
                 ui.notify("Ordner nicht gefunden.", type="negative")
                 return
 
+            spinner.visible = True
             status_label.set_text("Scanne …")
             preview_col.clear()
             _state["files"] = None
@@ -58,6 +71,7 @@ def build(tab_panel):
             files = await loop.run_in_executor(_executor, collect_files, folder)
 
             if not files:
+                spinner.visible = False
                 status_label.set_text("Keine Mediendateien gefunden.")
                 return
 
@@ -65,12 +79,15 @@ def build(tab_panel):
                 _executor, lambda: process_files(files, dry_run=True)
             )
 
+            spinner.visible = False
             _state["files"] = files
             all_changes = results["renames"] + results["corrections"]
 
             status_label.set_text(
-                f"{len(files)} Dateien · {len(all_changes)} Umbenennungen · "
-                f"{results['unchanged']} unverändert · {results['errors']} Fehler"
+                f"{len(files)} Dateien gefunden · "
+                f"{len(all_changes)} würden umbenannt · "
+                f"{results['unchanged']} bereits korrekt · "
+                f"{results['errors']} Fehler"
             )
 
             if all_changes:
@@ -79,16 +96,23 @@ def build(tab_panel):
                 with preview_col:
                     with ui.card().classes("w-full"):
                         ui.label("Vorschau (alt → neu):").classes(
-                            "font-semibold text-sm mb-1"
+                            "font-semibold text-sm mb-2"
                         )
-                        shown = all_changes[:50]
-                        for item in shown:
+                        for item in all_changes[:50]:
+                            old_short = _short_path(
+                                str(Path(folder) / item["old_name"]), folder
+                            )
+                            new_short = _short_path(
+                                str(Path(folder) / item["new_name"]), folder
+                            )
                             with ui.row().classes("w-full items-center gap-2"):
-                                ui.label(item["old_name"]).classes(
+                                ui.label(old_short).classes(
                                     "text-red-400 flex-1 truncate font-mono text-xs"
                                 )
-                                ui.icon("arrow_forward").classes("text-slate-400 text-xs")
-                                ui.label(item["new_name"]).classes(
+                                ui.icon("arrow_forward").classes(
+                                    "text-slate-400 text-xs"
+                                )
+                                ui.label(new_short).classes(
                                     "text-green-400 flex-1 truncate font-mono text-xs"
                                 )
                         if len(all_changes) > 50:
@@ -100,13 +124,14 @@ def build(tab_panel):
 
         ui.button("Vorschau", on_click=do_preview, icon="preview").classes("mt-2")
 
-        ui.separator()
+        ui.separator().classes("mt-4")
 
         # ── Umbenennen ─────────────────────────────────────────────────
         async def do_rename():
             if not _state.get("files") or not _state.get("has_preview"):
                 return
 
+            spinner.visible = True
             status_label.set_text("Benenne um …")
             btn_rename.disable()
             preview_col.clear()
@@ -117,6 +142,7 @@ def build(tab_panel):
                 _executor, lambda: process_files(files, dry_run=False)
             )
 
+            spinner.visible = False
             total = len(results["renames"]) + len(results["corrections"])
             msg = f"{total} Datei(en) umbenannt."
             if results["errors"]:
@@ -134,4 +160,6 @@ def build(tab_panel):
         )
         btn_rename.disable()
 
-        ui.label("Tipp: Vorher Backup erstellen!").classes("text-xs text-slate-400 mt-1")
+        ui.label("Tipp: Vorher Backup erstellen!").classes(
+            "text-xs text-slate-400 mt-1"
+        )
