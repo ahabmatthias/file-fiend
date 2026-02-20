@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Media Tools – Einstiegspunkt
-Starten mit: python app/main.py
+Starten mit: python -m app.main
 """
 
 from nicegui import ui

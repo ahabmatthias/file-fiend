@@ -20,10 +20,10 @@ def build(tab_panel):
                 placeholder="/Users/du/Bilder",
             ).classes("flex-1")
 
-            def pick_folder():
+            async def pick_folder():
                 # pywebview-Dialog wenn native=True, sonst Fallback auf Texteingabe
                 try:
-                    result = ui.run_javascript(
+                    result = await ui.run_javascript(
                         "window.pywebview?.api?.pick_folder?.()"
                     )
                 except Exception:
