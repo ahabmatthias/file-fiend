@@ -8,6 +8,7 @@ from pathlib import Path
 from nicegui import ui
 
 from app.core.duplicates import find_duplicates
+from app.ui.utils import pick_folder as _pick_folder
 
 
 def build(tab_panel):
@@ -20,18 +21,12 @@ def build(tab_panel):
                 placeholder="/Users/du/Bilder",
             ).classes("flex-1")
 
-            async def pick_folder():
-                # pywebview-Dialog wenn native=True, sonst Fallback auf Texteingabe
-                try:
-                    result = await ui.run_javascript(
-                        "window.pywebview?.api?.pick_folder?.()"
-                    )
-                except Exception:
-                    result = None
+            async def on_pick():
+                result = await _pick_folder()
                 if result:
                     folder_input.set_value(result)
 
-            ui.button("Ordner wählen", on_click=pick_folder, icon="folder_open")
+            ui.button("Ordner wählen", on_click=on_pick, icon="folder_open")
 
         # ── Scan-Button ────────────────────────────────────────────────
         status_label = ui.label("").classes("text-slate-500 text-sm")
