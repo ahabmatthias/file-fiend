@@ -6,7 +6,7 @@ Starten mit: python -m app.main
 
 from nicegui import ui
 
-from app.ui import duplicates_tab
+from app.ui import duplicates_tab, renamer_tab
 
 
 def main():
@@ -16,11 +16,15 @@ def main():
     with ui.column().classes("w-full max-w-4xl mx-auto p-6"):
         with ui.tabs().classes("w-full") as tabs:
             tab_dupes = ui.tab("Duplikate", icon="content_copy")
+            tab_renamer = ui.tab("Umbenennen", icon="drive_file_rename_outline")
             # weitere Tabs kommen später
 
         with ui.tab_panels(tabs, value=tab_dupes).classes("w-full mt-4"):
             panel_dupes = ui.tab_panel(tab_dupes)
             duplicates_tab.build(panel_dupes)
+
+            panel_renamer = ui.tab_panel(tab_renamer)
+            renamer_tab.build(panel_renamer)
 
     ui.run(
         title="Media Tools",
