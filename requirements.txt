@@ -1,3 +1,5 @@
 pillow
 pymediainfo
 tqdm
+nicegui
+pywebview
