@@ -3,8 +3,6 @@ Geteilte UI-Utilities
 """
 
 import asyncio
-import tkinter
-import tkinter.filedialog
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
@@ -16,6 +14,8 @@ async def pick_folder() -> Optional[str]:
     loop = asyncio.get_event_loop()
 
     def _dialog() -> Optional[str]:
+        import tkinter
+        import tkinter.filedialog
         root = tkinter.Tk()
         root.withdraw()
         root.wm_attributes("-topmost", True)
