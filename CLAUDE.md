@@ -49,5 +49,5 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python app/main.py
+python -m app.main
 ```
