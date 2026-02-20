@@ -7,12 +7,43 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from nicegui import app as nicegui_app
 from nicegui import ui
 
 from app.core.duplicates import find_duplicates
 from app.ui.utils import pick_folder as _pick_folder
 
 _executor = ThreadPoolExecutor(max_workers=1)
+
+_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+_VIDEO_EXTS = {".mp4", ".mov", ".avi", ".mkv", ".m4v"}
+
+# Gemountete Static-Routen merken um Duplikate zu vermeiden
+_mounted_routes: set[str] = set()
+
+
+def _static_url(path: str) -> str | None:
+    """Gibt eine servierbare URL für lokale Bilddateien zurück."""
+    p = Path(path)
+    ext = p.suffix.lower()
+    if ext not in _IMAGE_EXTS:
+        return None
+    folder = str(p.parent)
+    route = f"/preview{abs(hash(folder)) % 100000}"
+    if route not in _mounted_routes:
+        nicegui_app.add_static_files(route, folder)
+        _mounted_routes.add(route)
+    return f"{route}/{p.name}"
+
+
+def _file_icon(path: str) -> str:
+    """Gibt ein Material-Icon für den Dateityp zurück."""
+    ext = Path(path).suffix.lower()
+    if ext in _VIDEO_EXTS:
+        return "videocam"
+    if ext == ".heic":
+        return "photo"
+    return "insert_drive_file"
 
 
 def build(tab_panel):
@@ -54,9 +85,7 @@ def build(tab_panel):
             checkboxes.clear()
 
             loop = asyncio.get_event_loop()
-            dupes = await loop.run_in_executor(
-                _executor, find_duplicates, folder
-            )
+            dupes = await loop.run_in_executor(_executor, find_duplicates, folder)
 
             spinner.visible = False
 
@@ -71,14 +100,38 @@ def build(tab_panel):
 
             with results_col:
                 for group_hash, paths in dupes.items():
-                    with ui.card().classes("w-full"):
-                        ui.label(f"Hash: {group_hash[:12]}…").classes(
-                            "text-xs text-slate-400 font-mono"
-                        )
+                    with ui.card().classes("w-full p-3"):
                         for path in paths:
                             size_kb = Path(path).stat().st_size // 1024
-                            cb = ui.checkbox(f"{path}  ({size_kb} KB)")
-                            checkboxes[cb] = path
+                            url = _static_url(path)
+                            with ui.row().classes("items-center gap-3 w-full"):
+                                # Vorschau
+                                if url:
+                                    ui.image(url).classes(
+                                        "w-20 h-20 object-cover rounded"
+                                    )
+                                else:
+                                    with ui.element("div").classes(
+                                        "w-20 h-20 flex items-center justify-center "
+                                        "bg-slate-100 rounded text-slate-400"
+                                    ):
+                                        ui.icon(_file_icon(path), size="2rem")
+
+                                # Info + Checkbox
+                                with ui.column().classes("flex-1 gap-0"):
+                                    cb = ui.checkbox(Path(path).name)
+                                    base = Path(folder).parent
+                                    try:
+                                        short = str(Path(path).relative_to(base))
+                                    except ValueError:
+                                        short = "/".join(Path(path).parts[-4:])
+                                    ui.label(short).classes(
+                                        "text-xs text-slate-400 truncate max-w-lg"
+                                    )
+                                    ui.label(f"{size_kb} KB").classes(
+                                        "text-xs text-slate-400"
+                                    )
+                                checkboxes[cb] = path
 
         ui.button("Scannen", on_click=do_scan, icon="search")
 
