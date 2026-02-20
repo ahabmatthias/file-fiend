@@ -6,21 +6,19 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
 
-_tk_executor = ThreadPoolExecutor(max_workers=1)
+_executor = ThreadPoolExecutor(max_workers=1)
 
 
 async def pick_folder() -> Optional[str]:
-    """Öffnet nativen Ordner-Auswahl-Dialog via tkinter."""
+    """Öffnet nativen Ordner-Auswahl-Dialog via pywebview."""
     loop = asyncio.get_event_loop()
 
     def _dialog() -> Optional[str]:
-        import tkinter
-        import tkinter.filedialog
-        root = tkinter.Tk()
-        root.withdraw()
-        root.wm_attributes("-topmost", True)
-        folder = tkinter.filedialog.askdirectory()
-        root.destroy()
-        return folder or None
+        import webview
+        from nicegui import app as nicegui_app
+        result = nicegui_app.native.main_window.create_file_dialog(
+            dialog_type=webview.FOLDER_DIALOG
+        )
+        return result[0] if result else None
 
-    return await loop.run_in_executor(_tk_executor, _dialog)
+    return await loop.run_in_executor(_executor, _dialog)
