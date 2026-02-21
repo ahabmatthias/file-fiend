@@ -10,14 +10,14 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
 ### Phase 1: Funktionen
 
 - [x] Schritt 1: NiceGUI-Grundgerüst – leeres Fenster öffnet sich (`app/main.py`)
-- [ ] Schritt 2: Duplikat-Finder schreiben (`app/core/duplicates.py`)
+- [x] Schritt 2: Duplikat-Finder schreiben (`app/core/duplicates.py`)
   - Dateien in Ordner scannen
   - Duplikate per Hash (MD5/SHA1) erkennen
-  - Ergebnis in der UI anzeigen (Liste der Duplikate)
+  - Ergebnis in der UI anzeigen (Thumbnails + Liste)
   - Duplikate auswählen und löschen können
-- [ ] Schritt 3: `unified_media_renamer.py` als Tab integrieren
+- [x] Schritt 3: `unified_media_renamer.py` als Tab integrieren
   - Ordner auswählen
-  - Vorschau der Umbenennungen
+  - Vorschau der Umbenennungen (dry-run)
   - Umbenennen ausführen
 - [ ] Schritt 4: `video_compress.py` als Tab integrieren
   - Ordner oder Einzeldatei auswählen
