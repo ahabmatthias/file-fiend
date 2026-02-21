@@ -23,7 +23,7 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
   - Ordner oder Einzeldatei auswählen
   - Komprimierungsoptionen (Qualität, Format)
   - Fortschrittsanzeige
-- [ ] Schritt 5: `year_folder_script.py` als Tab integrieren
+- [x] Schritt 5: `year_folder_script.py` als Tab integrieren
   - Ordner auswählen
   - Vorschau der Ordnerstruktur
   - Sortierung ausführen
@@ -34,6 +34,9 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
   - Tool evaluieren: `py2app` oder `PyInstaller`
   - Build-Script erstellen
   - Testen ob natives Fenster funktioniert
+  > Hinweis: Beim Packaging Alt-Format-Regex-Zweig (`HH-MM-SS`) aus
+  > `unified_media_renamer.py` entfernen – nur für eigene Abwärtskompatibilität
+  > eingebaut, externe Nutzer haben keine Dateien im alten Format.
 
 ---
 

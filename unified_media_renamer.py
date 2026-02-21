@@ -40,8 +40,8 @@ CAMERA_MAPPINGS = {
 }
 
 def detect_file_status(filename):
-    """Erkennt bereits umbenannte Dateien: YYYY-MM-DD_HH-MM-SS_..."""
-    pattern = r'^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_[A-Za-z0-9].*\.[a-zA-Z0-9]+$'
+    """Erkennt bereits umbenannte Dateien: YYYY-MM-DD_HHMMSS_... oder altes Format YYYY-MM-DD_HH-MM-SS_..."""
+    pattern = r'^\d{4}-\d{2}-\d{2}_(?:\d{2}-\d{2}-\d{2}|\d{6})_[A-Za-z0-9].*\.[a-zA-Z0-9]+$'
     return re.match(pattern, filename) is not None
 
 def get_metadata(file_path, file_type):
@@ -151,19 +151,16 @@ def generate_filename(file_path, metadata, camera_type, is_renamed):
     original_name = file_path.name
     
     if is_renamed:
-        # Korrektur-Modus
+        # Korrektur-Modus: nur Kamera-Namen korrigieren, alles andere unverändert lassen
         parts = original_name.split('_')
         if len(parts) < 3:
             return original_name
-        
+
         corrected_camera = CAMERA_MAPPINGS.get(parts[2])
-        if corrected_camera:
-            parts[2] = corrected_camera
-        elif parts[2] not in ['Osmo', 'Lumix']:
-            # Unbekannte Kamera entfernen
-            if len(parts) >= 4:
-                parts = [parts[0], parts[1]] + parts[3:]
-        
+        if not corrected_camera:
+            return original_name  # kein Kamera-Mapping → nichts zu tun
+
+        parts[2] = corrected_camera
         new_name = '_'.join(parts)
     else:
         # Vollständige Umbenennung
@@ -190,7 +187,7 @@ def generate_filename(file_path, metadata, camera_type, is_renamed):
         number = extract_number(original_name, camera_type, False)
         
         # Name zusammenbauen
-        date_str = date_time.strftime('%Y-%m-%d_%H-%M-%S')
+        date_str = date_time.strftime('%Y-%m-%d_%H%M%S')
         corrected_camera = CAMERA_MAPPINGS.get(camera_type)
         
         if corrected_camera:
