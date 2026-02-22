@@ -31,6 +31,9 @@ def build(tab_panel):
 
             ui.button("Ordner wählen", on_click=on_pick, icon="folder_open")
 
+        # ── Kamera-Checkbox ────────────────────────────────────────────
+        camera_checkbox = ui.checkbox("Nach Kamera untergliedern").classes("mt-1")
+
         # ── Status + Spinner ───────────────────────────────────────────
         with ui.row().classes("items-center gap-3 mt-2"):
             spinner = ui.spinner(size="sm").classes("text-slate-400")
@@ -50,6 +53,7 @@ def build(tab_panel):
                 ui.notify("Ordner nicht gefunden.", type="negative")
                 return
 
+            group_by_camera = camera_checkbox.value
             spinner.visible = True
             status_label.set_text("Scanne …")
             preview_col.clear()
@@ -58,7 +62,9 @@ def build(tab_panel):
             btn_execute.disable()
 
             loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(_executor, scan_folder, folder)
+            result = await loop.run_in_executor(
+                _executor, lambda: scan_folder(folder, group_by_camera)
+            )
 
             spinner.visible = False
 
@@ -81,14 +87,27 @@ def build(tab_panel):
 
             with preview_col:
                 with ui.card().classes("w-full"):
-                    ui.label("Vorschau – Dateien pro Jahr:").classes(
-                        "font-semibold text-sm mb-2"
-                    )
-                    for year in sorted(result["files_by_year"].keys()):
-                        files = result["files_by_year"][year]
-                        ui.label(
-                            f"📁  {year}/  →  {len(files)} Datei(en)"
-                        ).classes("font-mono text-sm")
+                    if group_by_camera:
+                        ui.label("Vorschau – Dateien pro Jahr/Kamera:").classes(
+                            "font-semibold text-sm mb-2"
+                        )
+                        for year in sorted(result["files_by_year"].keys()):
+                            cam_dict = result["files_by_year"][year]
+                            ui.label(f"📁  {year}/").classes("font-mono text-sm font-semibold")
+                            for camera in sorted(cam_dict.keys()):
+                                count = len(cam_dict[camera])
+                                ui.label(f"    └─ {camera}  ({count} Datei(en))").classes(
+                                    "font-mono text-sm text-slate-300 pl-4"
+                                )
+                    else:
+                        ui.label("Vorschau – Dateien pro Jahr:").classes(
+                            "font-semibold text-sm mb-2"
+                        )
+                        for year in sorted(result["files_by_year"].keys()):
+                            files = result["files_by_year"][year]
+                            ui.label(
+                                f"📁  {year}/  →  {len(files)} Datei(en)"
+                            ).classes("font-mono text-sm")
 
                     if result["invalid_files"]:
                         ui.separator().classes("my-2")
@@ -132,8 +151,11 @@ def build(tab_panel):
             btn_execute.disable()
             preview_col.clear()
 
+            group_by_camera = _state["scan"].get("group_by_camera", False)
             loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(_executor, execute_organization, folder)
+            result = await loop.run_in_executor(
+                _executor, lambda: execute_organization(folder, group_by_camera)
+            )
 
             spinner.visible = False
 

@@ -27,6 +27,10 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
   - Ordner auswählen
   - Vorschau der Ordnerstruktur
   - Sortierung ausführen
+- [x] Schritt 5b: Jahr-Ordner-Tool – optionale Kamera-Unterordner
+  - Checkbox „Nach Kamera untergliedern" (Standard: aus)
+  - Vorschau zeigt `year/camera`-Baum wenn aktiviert
+  - Ausführen legt `<year>/<camera>/`-Struktur an
 
 ### Phase 2: Packaging
 

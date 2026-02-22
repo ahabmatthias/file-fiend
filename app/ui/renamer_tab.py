@@ -81,7 +81,7 @@ def build(tab_panel):
 
             spinner.visible = False
             _state["files"] = files
-            all_changes = results["renames"] + results["corrections"]
+            all_changes = results["renames"]
 
             status_label.set_text(
                 f"{len(files)} Dateien gefunden · "
@@ -143,7 +143,7 @@ def build(tab_panel):
             )
 
             spinner.visible = False
-            total = len(results["renames"]) + len(results["corrections"])
+            total = len(results["renames"])
             msg = f"{total} Datei(en) umbenannt."
             if results["errors"]:
                 msg += f"  {results['errors']} Fehler."
