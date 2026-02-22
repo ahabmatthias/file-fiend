@@ -3,7 +3,15 @@ Geteilte UI-Utilities
 """
 
 from pathlib import Path
-from typing import Optional
+
+
+def short_path(path: str, folder: str) -> str:
+    """Pfad relativ zum Parent des Scan-Ordners."""
+    base = Path(folder).parent
+    try:
+        return str(Path(path).relative_to(base))
+    except ValueError:
+        return "/".join(Path(path).parts[-4:])
 
 
 def validate_folder_path(folder: str) -> bool:
@@ -15,7 +23,7 @@ def validate_folder_path(folder: str) -> bool:
         return False
 
 
-async def pick_folder() -> Optional[str]:
+async def pick_folder() -> str | None:
     """Öffnet nativen Ordner-Auswahl-Dialog via pywebview."""
     import webview
     from nicegui import app as nicegui_app

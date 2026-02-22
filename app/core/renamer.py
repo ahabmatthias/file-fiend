@@ -12,9 +12,9 @@ from PIL.ExifTags import TAGS
 from pymediainfo import MediaInfo
 from tqdm import tqdm
 
-_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic"}
-_VIDEO_EXTS = {".mp4", ".mov", ".avi"}
-_SUPPORTED_EXTS = _IMAGE_EXTS | _VIDEO_EXTS
+from app.core.constants import IMAGE_EXTS, VIDEO_EXTS
+
+_SUPPORTED_EXTS = IMAGE_EXTS | VIDEO_EXTS
 
 _RENAMED_PATTERN = re.compile(
     r"^\d{4}-\d{2}-\d{2}_(?:\d{2}-\d{2}-\d{2}|\d{6})_[A-Za-z0-9].*\.[a-zA-Z0-9]+$"
@@ -38,10 +38,8 @@ def get_metadata(file_path: str, file_type: str) -> dict:
                 for tag_id, value in exif_data.items():
                     tag = TAGS.get(tag_id, tag_id)
                     if (
-                        tag == "DateTimeOriginal"
-                        or tag == "DateTime"
-                        and "datetime" not in metadata
-                    ):
+                        tag == "DateTimeOriginal" or tag == "DateTime"
+                    ) and "datetime" not in metadata:
                         try:
                             metadata["datetime"] = datetime.strptime(
                                 str(value), "%Y:%m:%d %H:%M:%S"
@@ -103,7 +101,7 @@ def collect_files(folder_path: str) -> list[dict]:
             and not file_path.name.startswith("._")
             and file_path.name != ".DS_Store"
         ):
-            file_type = "image" if file_path.suffix.lower() in _IMAGE_EXTS else "video"
+            file_type = "image" if file_path.suffix.lower() in IMAGE_EXTS else "video"
             files.append(
                 {
                     "path": file_path,
@@ -117,7 +115,13 @@ def collect_files(folder_path: str) -> list[dict]:
 
 def process_files(files_list: list[dict], dry_run: bool = True) -> dict:
     """Benennt Dateien um (oder simuliert es im dry_run)."""
-    results: dict = {"processed": 0, "unchanged": 0, "errors": 0, "renames": []}
+    results: dict = {
+        "processed": 0,
+        "unchanged": 0,
+        "errors": 0,
+        "error_details": [],
+        "renames": [],
+    }
 
     for file_info in tqdm(files_list, desc="Verarbeite", unit="Datei", disable=True):
         try:
@@ -135,12 +139,13 @@ def process_files(files_list: list[dict], dry_run: bool = True) -> dict:
                 continue
 
             new_path = file_path.parent / new_filename
-            counter = 1
-            while new_path.exists():
-                stem, _, ext = new_filename.rpartition(".")
-                new_filename = f"{stem}_({counter}).{ext}"
-                new_path = file_path.parent / new_filename
-                counter += 1
+            if new_path.exists():
+                base_stem, _, ext = new_filename.rpartition(".")
+                counter = 1
+                while new_path.exists():
+                    new_filename = f"{base_stem}_({counter}).{ext}"
+                    new_path = file_path.parent / new_filename
+                    counter += 1
 
             if not dry_run:
                 file_path.rename(new_path)
@@ -148,8 +153,11 @@ def process_files(files_list: list[dict], dry_run: bool = True) -> dict:
             results["renames"].append({"old_name": file_path.name, "new_name": new_filename})
             results["processed"] += 1
 
-        except Exception:
+        except Exception as e:
             results["errors"] += 1
+            results["error_details"].append(
+                {"file": str(file_info.get("path", "?")), "error": str(e)}
+            )
 
     return results
 

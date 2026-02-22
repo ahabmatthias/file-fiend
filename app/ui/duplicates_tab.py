@@ -10,13 +10,14 @@ from pathlib import Path
 from nicegui import app as nicegui_app
 from nicegui import ui
 
+from app.core.constants import IMAGE_EXTS, VIDEO_EXTS
 from app.core.duplicates import find_duplicates
 from app.ui.utils import pick_folder as _pick_folder
+from app.ui.utils import short_path as _short_path
 
 _executor = ThreadPoolExecutor(max_workers=1)
 
-_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
-_VIDEO_EXTS = {".mp4", ".mov", ".avi", ".mkv", ".m4v"}
+_PREVIEW_IMAGE_EXTS = IMAGE_EXTS | {".gif", ".webp"}
 
 # Gemountete Static-Routen merken um Duplikate zu vermeiden
 _mounted_routes: set[str] = set()
@@ -26,7 +27,7 @@ def _static_url(path: str) -> str | None:
     """Gibt eine servierbare URL für lokale Bilddateien zurück."""
     p = Path(path)
     ext = p.suffix.lower()
-    if ext not in _IMAGE_EXTS:
+    if ext not in _PREVIEW_IMAGE_EXTS:
         return None
     folder = str(p.parent)
     route = f"/preview{abs(hash(folder)) % 100000}"
@@ -39,7 +40,7 @@ def _static_url(path: str) -> str | None:
 def _file_icon(path: str) -> str:
     """Gibt ein Material-Icon für den Dateityp zurück."""
     ext = Path(path).suffix.lower()
-    if ext in _VIDEO_EXTS:
+    if ext in VIDEO_EXTS:
         return "videocam"
     if ext == ".heic":
         return "photo"
@@ -100,7 +101,10 @@ def build(tab_panel):
                 for _group_hash, paths in dupes.items():
                     with ui.card().classes("w-full p-3"):
                         for path in paths:
-                            size_kb = Path(path).stat().st_size // 1024
+                            try:
+                                size_kb = Path(path).stat().st_size // 1024
+                            except OSError:
+                                size_kb = 0
                             url = _static_url(path)
                             with ui.row().classes("items-center gap-3 w-full"):
                                 # Vorschau
@@ -116,11 +120,7 @@ def build(tab_panel):
                                 # Info + Checkbox
                                 with ui.column().classes("flex-1 gap-0"):
                                     cb = ui.checkbox(Path(path).name)
-                                    base = Path(folder).parent
-                                    try:
-                                        short = str(Path(path).relative_to(base))
-                                    except ValueError:
-                                        short = "/".join(Path(path).parts[-4:])
+                                    short = _short_path(path, folder)
                                     ui.label(short).classes(
                                         "text-xs text-slate-400 truncate max-w-lg"
                                     )
@@ -132,12 +132,7 @@ def build(tab_panel):
         ui.separator().classes("mt-4")
 
         # ── Löschen ────────────────────────────────────────────────────
-        async def do_delete():
-            to_delete = [path for cb, path in checkboxes.items() if cb.value]
-            if not to_delete:
-                ui.notify("Keine Dateien ausgewählt.", type="warning")
-                return
-
+        async def _execute_delete(to_delete: list[str]):
             deleted, errors = 0, []
             for path in to_delete:
                 try:
@@ -154,6 +149,26 @@ def build(tab_panel):
                 msg += f"  {len(errors)} Fehler."
             ui.notify(msg, type="positive" if not errors else "warning")
             await do_scan()
+
+        async def do_delete():
+            to_delete = [path for cb, path in checkboxes.items() if cb.value]
+            if not to_delete:
+                ui.notify("Keine Dateien ausgewählt.", type="warning")
+                return
+
+            async def _confirm_and_delete():
+                dialog.close()
+                await _execute_delete(to_delete)
+
+            with ui.dialog() as dialog, ui.card():
+                ui.label(f"{len(to_delete)} Datei(en) endgültig löschen?").classes("font-semibold")
+                ui.label("Diese Aktion kann nicht rückgängig gemacht werden.").classes(
+                    "text-sm text-slate-500"
+                )
+                with ui.row().classes("w-full justify-end gap-2 mt-2"):
+                    ui.button("Abbrechen", on_click=dialog.close)
+                    ui.button("Löschen", on_click=_confirm_and_delete, color="red")
+            dialog.open()
 
         with ui.row().classes("items-center gap-4"):
             ui.button(

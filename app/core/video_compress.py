@@ -1,27 +1,176 @@
 """
-Wrapper um video_compress.py (Root-Script) für UI-Integration.
+Video-Komprimierung: Batch-HEVC-Encoding mit ffmpeg.
 
 Stellt zwei öffentliche Funktionen bereit:
   preview_compression() – Dry-run, gibt strukturierte Liste zurück
   compress_files()      – Führt Komprimierung aus, unterstützt progress_cb
 """
 
+import json
 import shutil
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 
-from video_compress import (
-    Config,
-    build_ffmpeg_cmd,
-    collect_files,
-    detect_videotoolbox,
-    ffprobe_json,
-    human_mb,
-    pick_target_bitrate,
-    should_skip_copy,
-)
+SUPPORTED_EXTS = {".mp4", ".mov", ".m4v"}
 
 _LOW_BITRATE_THRESHOLD_MBPS = 5.0
+
+
+# ── Datenklassen ──────────────────────────────────────────────
+
+
+@dataclass
+class ProbeInfo:
+    width: int | None
+    height: int | None
+    bitrate_bps: int | None
+
+
+@dataclass
+class Config:
+    source: Path
+    target: Path
+    recursive: bool
+    min_size_mb: float
+    low_bitrate_threshold_mbps: float
+    bitrate_4k: str
+    bitrate_1440p: str
+    bitrate_1080p: str
+    bitrate_720p: str
+    fallback_bitrate: str
+    codec: str  # "auto", "hevc_videotoolbox", "libx265"
+    copy_original_on_skip: bool
+    overwrite: bool
+    dry_run: bool
+    audio_bitrate: str
+    copy_audio: bool
+
+
+# ── Hilfsfunktionen ───────────────────────────────────────────
+
+
+def human_mb(bytes_size: float) -> float:
+    return bytes_size / (1024 * 1024)
+
+
+def detect_videotoolbox() -> bool:
+    try:
+        res = subprocess.run(
+            ["ffmpeg", "-hide_banner", "-h", "encoder=hevc_videotoolbox"],
+            capture_output=True,
+            text=True,
+        )
+        return res.returncode == 0
+    except Exception:
+        return False
+
+
+def collect_files(source: Path, recursive: bool) -> list[Path]:
+    if recursive:
+        files = [p for p in source.rglob("*") if p.is_file() and p.suffix.lower() in SUPPORTED_EXTS]
+    else:
+        files = [p for p in source.iterdir() if p.is_file() and p.suffix.lower() in SUPPORTED_EXTS]
+    files.sort()
+    return files
+
+
+def ffprobe_json(path: Path) -> ProbeInfo:
+    cmd = [
+        "ffprobe",
+        "-v",
+        "quiet",
+        "-select_streams",
+        "v:0",
+        "-show_entries",
+        "stream=width,height,bit_rate",
+        "-of",
+        "json",
+        str(path),
+    ]
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        if res.returncode != 0:
+            return ProbeInfo(None, None, None)
+        data = json.loads(res.stdout or "{}")
+        streams = data.get("streams", [])
+        if not streams:
+            return ProbeInfo(None, None, None)
+        s = streams[0]
+        width = int(s.get("width")) if s.get("width") is not None else None
+        height = int(s.get("height")) if s.get("height") is not None else None
+        br = s.get("bit_rate")
+        bitrate_bps = int(br) if br is not None else None
+        return ProbeInfo(width, height, bitrate_bps)
+    except Exception:
+        return ProbeInfo(None, None, None)
+
+
+def pick_target_bitrate(width: int | None, cfg: Config) -> str:
+    if width is None:
+        return cfg.fallback_bitrate
+    if width >= 3840:
+        return cfg.bitrate_4k
+    if width >= 2560:
+        return cfg.bitrate_1440p
+    if width >= 1920:
+        return cfg.bitrate_1080p
+    return cfg.bitrate_720p
+
+
+def should_skip_copy(
+    file_path: Path,
+    probe: ProbeInfo,
+    min_size_mb: float,
+    low_bitrate_threshold_mbps: float,
+    target_bitrate_mbps: float,
+) -> tuple[bool, str]:
+    try:
+        size_mb = human_mb(file_path.stat().st_size)
+    except FileNotFoundError:
+        return False, ""
+
+    if size_mb < min_size_mb:
+        return True, f"Überspringe kleine Datei ({size_mb:.1f} MB)"
+
+    if probe.bitrate_bps and probe.width:
+        current_mbps = probe.bitrate_bps / 1_000_000.0
+        if current_mbps < low_bitrate_threshold_mbps and probe.width < 1920:
+            return True, f"Bereits gut komprimiert ({current_mbps:.1f} Mbps)"
+        if current_mbps <= target_bitrate_mbps * 1.2:
+            return True, f"Bereits optimal komprimiert ({current_mbps:.1f} Mbps)"
+
+    return False, ""
+
+
+def build_ffmpeg_cmd(
+    src: Path,
+    dst: Path,
+    video_codec: str,
+    target_bitrate: str,
+    audio_bitrate: str,
+    copy_audio: bool,
+) -> list[str]:
+    cmd = [
+        "ffmpeg",
+        "-i",
+        str(src),
+        "-c:v",
+        video_codec,
+        "-b:v",
+        target_bitrate,
+        "-tag:v",
+        "hvc1",
+    ]
+    if copy_audio:
+        cmd += ["-c:a", "copy"]
+    else:
+        cmd += ["-c:a", "aac", "-b:a", audio_bitrate]
+    cmd += ["-movflags", "+faststart", "-y", str(dst)]
+    return cmd
+
+
+# ── Konfiguration ─────────────────────────────────────────────
 
 
 def _make_config(
@@ -51,6 +200,9 @@ def _make_config(
         audio_bitrate="128k",
         copy_audio=False,
     )
+
+
+# ── Öffentliche API ───────────────────────────────────────────
 
 
 def preview_compression(

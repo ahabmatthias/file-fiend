@@ -10,17 +10,9 @@ from pathlib import Path
 from nicegui import ui
 
 from app.ui.utils import pick_folder
+from app.ui.utils import short_path as _short_path
 
 _executor = ThreadPoolExecutor(max_workers=1)
-
-
-def _short_path(path: str, folder: str) -> str:
-    """Pfad relativ zum Parent des Scan-Ordners."""
-    base = Path(folder).parent
-    try:
-        return str(Path(path).relative_to(base))
-    except ValueError:
-        return "/".join(Path(path).parts[-4:])
 
 
 def build(tab_panel):
@@ -120,10 +112,7 @@ def build(tab_panel):
         ui.separator().classes("mt-4")
 
         # ── Umbenennen ─────────────────────────────────────────────────
-        async def do_rename():
-            if not _state.get("files") or not _state.get("has_preview"):
-                return
-
+        async def _execute_rename():
             spinner.visible = True
             status_label.set_text("Benenne um …")
             btn_rename.disable()
@@ -143,9 +132,36 @@ def build(tab_panel):
             if results["errors"]:
                 msg += f"  {results['errors']} Fehler."
             ui.notify(msg, type="positive" if not results["errors"] else "warning")
+
+            if results.get("error_details"):
+                with preview_col:
+                    with ui.card().classes("w-full"):
+                        ui.label("Fehler:").classes("font-semibold text-sm text-red-400 mb-1")
+                        for err in results["error_details"][:20]:
+                            ui.label(f"{err['file']}: {err['error']}").classes(
+                                "text-xs text-red-300 font-mono"
+                            )
             status_label.set_text(msg)
             _state["files"] = None
             _state["has_preview"] = False
+
+        async def do_rename():
+            if not _state.get("files") or not _state.get("has_preview"):
+                return
+
+            n_renames = len([f for f in _state["files"] if not f["is_renamed"]])
+
+            async def _confirm_and_rename():
+                dialog.close()
+                await _execute_rename()
+
+            with ui.dialog() as dialog, ui.card():
+                ui.label(f"{n_renames} Datei(en) umbenennen?").classes("font-semibold")
+                ui.label("Die Originalnamen gehen verloren.").classes("text-sm text-slate-500")
+                with ui.row().classes("w-full justify-end gap-2 mt-2"):
+                    ui.button("Abbrechen", on_click=dialog.close)
+                    ui.button("Umbenennen", on_click=_confirm_and_rename, color="green")
+            dialog.open()
 
         btn_rename = ui.button(
             "Umbenennen ausführen",

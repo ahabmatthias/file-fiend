@@ -24,9 +24,9 @@ try:
 except ImportError:
     pass  # HEIC-Support optional – ohne Plugin werden HEIC-Dateien übersprungen
 
+from app.core.constants import ALL_MEDIA_EXTS, IMAGE_EXTS
 from app.core.renamer import get_metadata
 
-_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic"}
 _EXIF_DATETIME_TAGS = (36867, 36868, 306)  # DateTimeOriginal, DateTimeDigitized, DateTime
 _CAMERA_MAPPINGS = {
     "GH5": "Lumix",
@@ -37,22 +37,6 @@ _CAMERA_MAPPINGS = {
 _XMP_DATE_RE = re.compile(
     r'(?:DateTimeOriginal|CreateDate|DateCreated|MetadataDate)[="\s>:]+(\d{4})'
 )
-_SUPPORTED_EXTS = {
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".tiff",
-    ".bmp",
-    ".heic",
-    ".mp4",
-    ".mov",
-    ".avi",
-    ".mkv",
-    ".aac",
-    ".wav",
-    ".mp3",
-    ".m4a",
-}
 
 
 def extract_year_from_filename(filename: str) -> int | None:
@@ -207,7 +191,7 @@ def _detect_camera(file_path: Path) -> str:
     Erkennt die Kamera aus EXIF-Daten oder Dateinamen.
     Reihenfolge: EXIF model → EXIF make → Dateiname-Präfix → 'Sonstige'.
     """
-    file_type = "image" if file_path.suffix.lower() in _IMAGE_EXTS else "video"
+    file_type = "image" if file_path.suffix.lower() in IMAGE_EXTS else "video"
     try:
         meta = _run_silent(get_metadata, str(file_path), file_type)
     except Exception:
@@ -248,7 +232,7 @@ def _extract_year(file_path: Path) -> int | None:
     if year:
         return int(year)
 
-    if file_path.suffix.lower() in _IMAGE_EXTS:
+    if file_path.suffix.lower() in IMAGE_EXTS:
         return _read_exif_year(file_path)
 
     # Video-Fallback: pymediainfo via get_metadata()
@@ -290,7 +274,7 @@ def _collect_files_with_years(folder_path: str, group_by_camera: bool = False):
             or file_path.parent.name == "duplicates"
         ):
             continue
-        if file_path.suffix.lower() not in _SUPPORTED_EXTS:
+        if file_path.suffix.lower() not in ALL_MEDIA_EXTS:
             continue
 
         year = _extract_year(file_path)

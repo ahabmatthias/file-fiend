@@ -152,14 +152,12 @@ ist noch nicht getestet, weil dafür echte Testbilder mit Metadaten nötig wäre
 
 ## 2026-02 – Video-Compress-Tab: Integration & UX-Iterationen
 
-### Wrapper-Pattern: Direkter Import statt Copy-Paste
-`app/core/video_compress.py` importiert direkt aus dem Root-Script `video_compress.py` –
-keine Code-Duplizierung. Der Wrapper ergänzt nur das, was für die UI fehlt: strukturierte
-Rückgabewerte, `progress_cb`-Parameter, Unterdrückung von print-Output.
-
-Wo die Root-Logik zu monolithisch war (die Haupt-Loop in `compress_videos()` gibt nichts
-zurück), wurde sie in `compress_files()` neu implementiert – aber mit denselben Hilfsfunktionen
-(`collect_files`, `ffprobe_json`, `pick_target_bitrate`, `should_skip_copy`, `build_ffmpeg_cmd`).
+### Von Wrapper zu eigenständigem Modul
+`app/core/video_compress.py` war ursprünglich ein Wrapper um das Root-Script `video_compress.py`.
+Nach dem Aufräumen (Legacy-Scripts löschen) war der Import kaputt – der Video-Tab crashte.
+Fix: Alle relevanten Funktionen (`Config`, `ProbeInfo`, `collect_files`, `ffprobe_json`,
+`detect_videotoolbox`, `pick_target_bitrate`, `human_mb`, `should_skip_copy`, `build_ffmpeg_cmd`)
+direkt in `app/core/video_compress.py` eingebettet – wie bei `renamer.py` und `year_org.py`.
 
 ### Pre-commit: ruff SIM108
 ruff hat einen if/else-Block durch einen Ternary-Ausdruck ersetzt (SIM108). Kann direkt beim
@@ -187,6 +185,39 @@ Design und Labels werden immer wieder angefasst – das ist kein Fehler, sondern
 Einzelne Korrekturen direkt mitzudenken spart später aufwändigere Refactorings. Ein
 dedizierter UX-Review-Block (alle Tabs auf einmal) ist trotzdem geplant, um konsistente
 Sprache und Verhalten über die gesamte App sicherzustellen.
+
+---
+
+## 2026-02 – Code Review vor Packaging: Opus als Reviewer
+
+### Workflow: Sonnet baut, Opus reviewt
+Nach vielen einzelnen Arbeitsblöcken mit Sonnet (Features, Refactoring, Tests) hatte sich
+eine Reihe von Problemen angesammelt, die im Einzelkontext nicht aufgefallen sind:
+- **Toter Import**: `video_compress.py` importierte noch aus dem gelöschten Root-Script –
+  der Video-Tab war komplett kaputt, aber kein Test hat das abgedeckt
+- **Operator-Precedence-Bug**: `or` vs `and` ohne Klammern im EXIF-Parsing (`renamer.py`)
+- **Collision-Counter-Bug**: Bei Namenskollisionen entstand `foto_(1)_(2).jpg` statt `foto_(2).jpg`
+- **Inkonsistente Patterns**: Jedes Modul hatte eigene Extension-Sets und eigenes Error-Handling
+
+**Erkenntnis:** Sonnet ist produktiv für Feature-Arbeit in einzelnen Dateien, sieht aber
+cross-file-Probleme und subtile Logikfehler nicht zuverlässig. Ein dedizierter Review-Pass
+mit Opus (oder manuell) nach mehreren Sonnet-Sessions fängt genau diese Klasse von Fehlern ab.
+
+### Konkrete Fixes
+1. Video-Tab: Logik aus gelöschtem Root-Script direkt in `app/core/video_compress.py` eingebettet
+2. Operator-Precedence: Explizite Klammerung in `renamer.py` EXIF-Parsing
+3. Collision-Counter: `base_stem` wird vor der Schleife gesetzt, nicht in jedem Durchlauf neu
+4. `stat()`-Crash in `duplicates_tab.py` mit `try/except` abgesichert
+5. `_short_path` aus zwei Tabs in `app/ui/utils.py` dedupliziert
+6. Extension-Sets in `app/core/constants.py` zentralisiert
+7. Error-Handling in `renamer.py` auf strukturierte Dicts umgestellt (wie `year_org.py`)
+8. Bestätigungsdialoge für "Löschen" und "Umbenennen" hinzugefügt
+
+### Muster: Review-Checkliste für vor dem Packaging
+- Jeden Tab in der laufenden App durchklicken
+- `grep -r "from <gelöschtes_modul>" app/` – tote Imports finden
+- `make check` (lint + test) – muss grün sein
+- Operator-Precedence bei gemischten `and`/`or` immer explizit klammern
 
 ---
 
