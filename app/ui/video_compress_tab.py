@@ -41,11 +41,10 @@ def build(tab_panel, shared=None):
             codec_select = ui.select(
                 label="Codec",
                 options={
-                    "auto": "Automatisch",
-                    "hevc_videotoolbox": "Hardware (schnell)",
-                    "libx265": "Software (langsam)",
+                    "hevc_videotoolbox": "Hardware (Default)",
+                    "libx265": "Software (gründlicher)",
                 },
-                value="auto",
+                value="hevc_videotoolbox",
             ).classes("w-52")
 
             min_size_input = ui.number(label="Min-Größe (MB)", value=30.0, min=0, step=5).classes(
@@ -54,9 +53,10 @@ def build(tab_panel, shared=None):
 
             recursive_cb = ui.checkbox("Mit Unterordnern")
 
-        ui.label("ⓘ Hardware-Codec (hevc_videotoolbox) – nur macOS").classes(
-            "text-xs text-gray-400"
-        )
+        ui.label(
+            "Hardware nutzt den Apple-Chip direkt – schnell und stromsparend. "
+            "Software encodiert in reinem Code – langsamer, minimal präziser."
+        ).classes("text-xs text-slate-400 mt-1")
 
         # ── Status + Spinner ───────────────────────────────────────────
         with ui.row().classes("items-center gap-3 mt-2"):

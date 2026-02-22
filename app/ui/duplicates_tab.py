@@ -176,3 +176,4 @@ def build(tab_panel, shared=None):
             icon="delete",
             color="red",
         )
+        ui.label("Tipp: Vorher Backup erstellen!").classes("text-xs text-slate-400 mt-1")
