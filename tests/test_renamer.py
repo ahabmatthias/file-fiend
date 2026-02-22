@@ -2,7 +2,7 @@
 Tests für unified_media_renamer – collect_files() und process_files() im dry-run.
 """
 
-from unified_media_renamer import collect_files, detect_file_status, process_files
+from app.core.renamer import collect_files, detect_file_status, process_files
 
 
 def test_collect_files_finds_images(tmp_path):

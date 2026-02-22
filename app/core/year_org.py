@@ -24,14 +24,7 @@ try:
 except ImportError:
     pass  # HEIC-Support optional – ohne Plugin werden HEIC-Dateien übersprungen
 
-from unified_media_renamer import get_metadata
-from year_folder_script import (
-    create_year_folders,
-    extract_year_from_filename,
-    find_empty_folders,
-    find_filename_conflicts,
-    move_files_to_year_folders,
-)
+from app.core.renamer import get_metadata
 
 _IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic"}
 _EXIF_DATETIME_TAGS = (36867, 36868, 306)  # DateTimeOriginal, DateTimeDigitized, DateTime
@@ -60,6 +53,97 @@ _SUPPORTED_EXTS = {
     ".mp3",
     ".m4a",
 }
+
+
+def extract_year_from_filename(filename: str) -> int | None:
+    """Extrahiert das Jahr aus den ersten 4 Zeichen des Dateinamens (1990–2030)."""
+    try:
+        year = int(filename[:4])
+        return year if 1990 <= year <= 2030 else None
+    except (ValueError, IndexError):
+        return None
+
+
+def find_filename_conflicts(files_by_year: dict, target_folder: Path) -> list:
+    """Findet Konflikte: gleicher Dateiname aus verschiedenen Quell-Ordnern."""
+    conflicts = []
+    for year, files in files_by_year.items():
+        filename_sources: dict = defaultdict(list)
+        for file_path in files:
+            filename_sources[file_path.name].append(file_path)
+        for filename, file_paths in filename_sources.items():
+            if len(file_paths) > 1:
+                source_dirs = {fp.parent for fp in file_paths}
+                if len(source_dirs) > 1:
+                    conflicts.append(
+                        {
+                            "filename": filename,
+                            "year": year,
+                            "paths": file_paths,
+                            "source_dirs": list(source_dirs),
+                        }
+                    )
+    return conflicts
+
+
+def _create_year_folders(files_by_year: dict, target_folder: Path) -> None:
+    """Erstellt Jahr-Unterordner im Zielverzeichnis."""
+    for year in sorted(files_by_year.keys()):
+        (target_folder / str(year)).mkdir(exist_ok=True)
+
+
+def _move_files_to_year_folders(files_by_year: dict, target_folder: Path) -> tuple[list, list]:
+    """Verschiebt Dateien in die entsprechenden Jahr-Ordner."""
+    moved_files = []
+    errors = []
+    for year in sorted(files_by_year.keys()):
+        year_folder = target_folder / str(year)
+        for file_path in files_by_year[year]:
+            target_path = year_folder / file_path.name
+            if target_path.exists() and target_path != file_path:
+                errors.append(
+                    {
+                        "file": file_path,
+                        "target": target_path,
+                        "error": "Zieldatei existiert bereits",
+                    }
+                )
+                continue
+            try:
+                if file_path.parent != year_folder:
+                    shutil.move(str(file_path), str(target_path))
+                moved_files.append({"source": file_path, "target": target_path})
+            except Exception as e:
+                errors.append({"file": file_path, "target": target_path, "error": str(e)})
+    return moved_files, errors
+
+
+def _find_empty_folders(folder_path: str) -> list:
+    """Findet leere Ordner (rekursiv), Jahr-Ordner werden nie als leer betrachtet."""
+    folder = Path(folder_path)
+    empty_folders = []
+
+    def _is_empty(path: Path) -> bool:
+        if not path.is_dir():
+            return False
+        if path.name.isdigit() and path.parent == folder:
+            return False
+        try:
+            for item in path.iterdir():
+                if item.is_file():
+                    if not (item.name.startswith("._") or item.name == ".DS_Store"):
+                        return False
+                elif item.is_dir() and not _is_empty(item):
+                    return False
+            return True
+        except PermissionError:
+            return False
+
+    all_dirs = sorted(folder.rglob("*"), key=lambda x: len(x.parts), reverse=True)
+    for d in all_dirs:
+        if d.is_dir() and d != folder and _is_empty(d):
+            empty_folders.append(d)
+    return empty_folders
 
 
 def _read_exif_year(file_path: Path) -> int | None:
@@ -263,7 +347,7 @@ def scan_folder(folder_path: str, group_by_camera: bool = False) -> dict:
             }
         else:
             flat = files_by_year
-        conflicts = _run_silent(find_filename_conflicts, flat, folder)
+        conflicts = find_filename_conflicts(flat, folder)
 
     if group_by_camera:
         total = sum(
@@ -352,7 +436,7 @@ def execute_organization(folder_path: str, group_by_camera: bool = False) -> dic
     else:
         flat = files_by_year
 
-    conflicts = _run_silent(find_filename_conflicts, flat, folder)
+    conflicts = find_filename_conflicts(flat, folder)
     if conflicts:
         return {
             "error": f"{len(conflicts)} Dateiname-Konflikte – Organisation abgebrochen.",
@@ -366,12 +450,10 @@ def execute_organization(folder_path: str, group_by_camera: bool = False) -> dic
     if group_by_camera:
         moved_files, move_errors = _move_with_camera_groups(files_by_year, folder)
     else:
-        _run_silent(create_year_folders, files_by_year, folder, dry_run=False)
-        moved_files, move_errors = _run_silent(
-            move_files_to_year_folders, files_by_year, folder, dry_run=False
-        )
+        _create_year_folders(files_by_year, folder)
+        moved_files, move_errors = _move_files_to_year_folders(files_by_year, folder)
 
-    empty_folders = _run_silent(find_empty_folders, folder_path)
+    empty_folders = _find_empty_folders(folder_path)
     removed = _remove_empty_folders(empty_folders)
 
     return {

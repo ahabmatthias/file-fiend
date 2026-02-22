@@ -1,18 +1,157 @@
 """
-Wrapper für unified_media_renamer.py (Projekt-Root)
-Stellt collect_files und process_files für den UI-Tab bereit.
+Mediendateien umbenennen nach Schema YYYY-MM-DD_HHMMSS_<original-stem>.<ext>.
+Bereits umbenannte Dateien (Muster erkannt) werden übersprungen.
 """
 
-import tqdm as _tqdm
+import re
+from datetime import datetime
+from pathlib import Path
 
-import unified_media_renamer as _renamer_module
-from unified_media_renamer import collect_files, process_files
+from PIL import Image
+from PIL.ExifTags import TAGS
+from pymediainfo import MediaInfo
+from tqdm import tqdm
 
-# tqdm-Output unterdrücken: unified_media_renamer nutzt `from tqdm import tqdm`,
-# daher die Referenz direkt im Modul überschreiben.
-_orig_tqdm = _tqdm.tqdm
-_silent = lambda *a, **kw: _orig_tqdm(*a, **{**kw, "disable": True})
-_renamer_module.tqdm = _silent
-_renamer_module.print = lambda *a, **kw: None  # type: ignore[attr-defined]  # print-Output unterdrücken
+_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic"}
+_VIDEO_EXTS = {".mp4", ".mov", ".avi"}
+_SUPPORTED_EXTS = _IMAGE_EXTS | _VIDEO_EXTS
 
-__all__ = ["collect_files", "process_files"]
+_RENAMED_PATTERN = re.compile(
+    r"^\d{4}-\d{2}-\d{2}_(?:\d{2}-\d{2}-\d{2}|\d{6})_[A-Za-z0-9].*\.[a-zA-Z0-9]+$"
+)
+
+
+def detect_file_status(filename: str) -> bool:
+    """Gibt True zurück wenn die Datei bereits umbenannt wurde."""
+    return _RENAMED_PATTERN.match(filename) is not None
+
+
+def get_metadata(file_path: str, file_type: str) -> dict:
+    """Extrahiert datetime, make, model aus Bild/Video-Metadaten."""
+    try:
+        if file_type == "image":
+            with Image.open(file_path) as image:
+                exif_data = image._getexif()
+                if not exif_data:
+                    return {}
+                metadata: dict = {}
+                for tag_id, value in exif_data.items():
+                    tag = TAGS.get(tag_id, tag_id)
+                    if (
+                        tag == "DateTimeOriginal"
+                        or tag == "DateTime"
+                        and "datetime" not in metadata
+                    ):
+                        try:
+                            metadata["datetime"] = datetime.strptime(
+                                str(value), "%Y:%m:%d %H:%M:%S"
+                            )
+                        except ValueError:
+                            pass
+                    elif tag in ("Make", "Model"):
+                        metadata[tag.lower()] = str(value)
+                return metadata
+        elif file_type == "video":
+            media_info = MediaInfo.parse(file_path)
+            for track in media_info.tracks:
+                if track.track_type == "General" and track.recorded_date:
+                    date_str = str(track.recorded_date)[:19]
+                    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"):
+                        try:
+                            return {"datetime": datetime.strptime(date_str, fmt)}
+                        except ValueError:
+                            continue
+    except Exception:
+        pass
+    return {}
+
+
+def _generate_filename(file_path: Path, metadata: dict) -> str:
+    """Generiert neuen Dateinamen: YYYY-MM-DD_HHMMSS_<original-stem>.<ext>"""
+    date_time = None
+
+    date_match = re.search(r"(\d{4}-\d{2}-\d{2})", file_path.name)
+    if date_match:
+        try:
+            date_time = datetime.strptime(date_match.group(1) + " 00:00:00", "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            pass
+
+    if not date_time:
+        date_time = metadata.get("datetime")
+
+    if not date_time:
+        date_time = datetime.fromtimestamp(file_path.stat().st_mtime)
+
+    date_str = date_time.strftime("%Y-%m-%d_%H%M%S")
+    ext = file_path.suffix.lower()
+    if ext == ".jpeg":
+        ext = ".jpg"
+
+    return f"{date_str}_{file_path.stem}{ext}"
+
+
+def collect_files(folder_path: str) -> list[dict]:
+    """Sammelt alle Mediendateien im Ordner (rekursiv)."""
+    folder = Path(folder_path)
+    files = []
+
+    for file_path in folder.rglob("*"):
+        if (
+            file_path.is_file()
+            and file_path.suffix.lower() in _SUPPORTED_EXTS
+            and not file_path.name.startswith("._")
+            and file_path.name != ".DS_Store"
+        ):
+            file_type = "image" if file_path.suffix.lower() in _IMAGE_EXTS else "video"
+            files.append(
+                {
+                    "path": file_path,
+                    "type": file_type,
+                    "is_renamed": detect_file_status(file_path.name),
+                }
+            )
+
+    return files
+
+
+def process_files(files_list: list[dict], dry_run: bool = True) -> dict:
+    """Benennt Dateien um (oder simuliert es im dry_run)."""
+    results: dict = {"processed": 0, "unchanged": 0, "errors": 0, "renames": []}
+
+    for file_info in tqdm(files_list, desc="Verarbeite", unit="Datei", disable=True):
+        try:
+            file_path = file_info["path"]
+
+            if file_info["is_renamed"]:
+                results["unchanged"] += 1
+                continue
+
+            metadata = get_metadata(str(file_path), file_info["type"])
+            new_filename = _generate_filename(file_path, metadata)
+
+            if new_filename == file_path.name:
+                results["unchanged"] += 1
+                continue
+
+            new_path = file_path.parent / new_filename
+            counter = 1
+            while new_path.exists():
+                stem, _, ext = new_filename.rpartition(".")
+                new_filename = f"{stem}_({counter}).{ext}"
+                new_path = file_path.parent / new_filename
+                counter += 1
+
+            if not dry_run:
+                file_path.rename(new_path)
+
+            results["renames"].append({"old_name": file_path.name, "new_name": new_filename})
+            results["processed"] += 1
+
+        except Exception:
+            results["errors"] += 1
+
+    return results
+
+
+__all__ = ["collect_files", "detect_file_status", "process_files", "get_metadata"]

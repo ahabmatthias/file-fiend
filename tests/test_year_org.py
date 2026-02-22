@@ -5,8 +5,12 @@ Alle Tests laufen im dry-run / scan-only Modus und bewegen keine echten Dateien.
 
 from collections import defaultdict
 
-from app.core.year_org import execute_organization, scan_folder
-from year_folder_script import extract_year_from_filename, find_filename_conflicts
+from app.core.year_org import (
+    execute_organization,
+    extract_year_from_filename,
+    find_filename_conflicts,
+    scan_folder,
+)
 
 # ── extract_year_from_filename ──────────────────────────────────────────────
 
