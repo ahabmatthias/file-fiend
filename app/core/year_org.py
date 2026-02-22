@@ -34,13 +34,27 @@ _XMP_DATE_RE = re.compile(
 )
 
 
+_FILENAME_DATE_RE = re.compile(r"(\d{4})(\d{2})(\d{2})")
+
+
 def extract_year_from_filename(filename: str) -> int | None:
-    """Extrahiert das Jahr aus den ersten 4 Zeichen des Dateinamens (1990–2030)."""
+    """
+    Extrahiert das Jahr aus dem Dateinamen.
+    1. Erste 4 Zeichen (z.B. '2025_vacation.jpg')
+    2. Regex-Fallback für 8-stellige Datumssequenzen (z.B. 'DJI_20251213...')
+    """
     try:
         year = int(filename[:4])
-        return year if 1990 <= year <= 2030 else None
+        if 1990 <= year <= 2030:
+            return year
     except (ValueError, IndexError):
-        return None
+        pass
+    m = _FILENAME_DATE_RE.search(filename)
+    if m:
+        year = int(m.group(1))
+        if 1990 <= year <= 2030:
+            return year
+    return None
 
 
 def find_filename_conflicts(files_by_year: dict, target_folder: Path) -> list:
@@ -211,29 +225,24 @@ def _detect_camera(file_path: Path) -> str:
 
 def _extract_year(file_path: Path) -> int | None:
     """
-    Jahres-Erkennung mit zwei Stufen:
-    1. Dateiname (erste 4 Zeichen, schnell)
-    2. EXIF/Metadata-Fallback via get_metadata()
+    Jahres-Erkennung:
+    1. Metadaten (EXIF / pymediainfo) – zuverlässigste Quelle
+    2. Dateiname als Fallback
     """
-    year = extract_year_from_filename(file_path.name)
-    if year:
-        return int(year)
-
     if file_path.suffix.lower() in IMAGE_EXTS:
-        return _read_exif_year(file_path)
+        year = _read_exif_year(file_path)
+        if year:
+            return year
+    else:
+        try:
+            meta = _run_silent(get_metadata, str(file_path), "video")
+            dt = meta.get("datetime")
+            if dt and 1990 <= dt.year <= 2030:
+                return int(dt.year)
+        except Exception:
+            pass
 
-    # Video-Fallback: pymediainfo via get_metadata()
-    try:
-        meta = _run_silent(get_metadata, str(file_path), "video")
-        dt = meta.get("datetime")
-        if dt:
-            y = dt.year
-            if 1990 <= y <= 2030:
-                return int(y)
-    except Exception:
-        pass
-
-    return None
+    return extract_year_from_filename(file_path.name)
 
 
 def _collect_files_with_years(folder_path: str, group_by_camera: bool = False, progress_cb=None):

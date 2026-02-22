@@ -52,13 +52,17 @@ def get_metadata(file_path: str, file_type: str) -> dict:
         elif file_type == "video":
             media_info = MediaInfo.parse(file_path)
             for track in media_info.tracks:
-                if track.track_type == "General" and track.recorded_date:
-                    date_str = str(track.recorded_date)[:19]
-                    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"):
-                        try:
-                            return {"datetime": datetime.strptime(date_str, fmt)}
-                        except ValueError:
-                            continue
+                if track.track_type != "General":
+                    continue
+                raw_date = track.recorded_date or track.encoded_date or track.tagged_date
+                if not raw_date:
+                    continue
+                date_str = str(raw_date).replace(" UTC", "")[:19]
+                for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"):
+                    try:
+                        return {"datetime": datetime.strptime(date_str, fmt)}
+                    except ValueError:
+                        continue
     except Exception:
         pass
     return {}
