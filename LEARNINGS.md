@@ -303,6 +303,59 @@ dauerhaft gesetzt betrachten.
 Bestätigungsdialog mit „Endgültig löschen" kommuniziert die Konsequenz bereits klar.
 Doppelte Warnungen wirken bevormundend und stören den Fokus.
 
+### Hinweis-Position und -Farbe: am bestehenden Muster orientieren
+Backup-Hinweis im Duplikate-Tab wurde zuerst _vor_ dem Scannen-Button platziert (amber-Farbe).
+Das war inkonsistent mit dem Renamer-Tab, wo derselbe Hinweis _nach_ dem Ausführen-Button steht
+(text-slate-400). Designziel war immer „wie beim Renamer" – aber ohne direkten Vergleich war
+die erste Umsetzung leicht daneben.
+
+**Muster:** Bevor ein neues UI-Element platziert wird, vorhandene Tabs auf denselben
+Elementtyp prüfen (`grep "Tipp"` o.ä.) und Position + Klassen 1:1 übernehmen.
+
+### Codec-Select: „auto" entfernen, sinnvolle Defaults setzen
+Erste Version hatte `"auto"` als Option und Default – das ist bequem beim Entwickeln,
+aber für Nutzer bedeutungslos. Wenn `"auto"` ohnehin immer `hevc_videotoolbox` auf macOS
+wählt, ist es klarer, direkt diesen Default zu setzen und `"auto"` wegzulassen.
+Nutzer sehen, was tatsächlich passiert, und können bewusst abweichen.
+
+---
+
+## 2026-02 – Dark-Theme & UI-Redesign (feature/dark-theme)
+
+### Warum ein eigenes Design-System
+NiceGUI rendert alles als Quasar-Komponenten. Quasar setzt eigene Inline-Styles, die sich
+nur mit `!important` überschreiben lassen. Statt in jedem Tab einzeln Tailwind-Klassen zu
+verwenden, wurde ein zentrales `theme.py` eingeführt, das per `ui.add_head_html()` ein
+komplettes Dark-Theme injiziert. Vorteile: eine Stelle für Farben und Abstände, Tabs
+nutzen nur noch CSS-Klassen (`mt-btn-primary`, `mt-card`, `mt-dupe-group` etc.).
+
+### Tab-Architektur vereinfacht
+Vorher: `build(tab_panel, shared=None)` mit `with tab_panel:` im Body.
+Nachher: `build(shared: dict)`, Panel-Wrapper liegt in `main.py` (`with ui.tab_panel(...): tab.build(shared)`).
+Tabs rendern nur ihren Inhalt, nicht den Container – saubere Trennung.
+
+### ui.element("div").text() existiert nicht
+NiceGUI's `ui.element()` hat keine `.text()`-Methode. Der Aufruf wirft einen
+`AttributeError`, der async Callbacks still abbricht – kein Fehler in der Konsole,
+die UI zeigt einfach nichts an. Fix: `ui.html('<div class="...">Text</div>')` statt
+`ui.element("div").classes("...").text("Text")`.
+
+### Status-Pills statt ui.notify()
+Nach Aktionen (Scan, Umbenennen, Komprimieren) zeigen jetzt farbige Pills direkt im Tab
+das Ergebnis (`theme.pill()`). `ui.notify()` ist entfernt – Toasts verschwinden nach
+wenigen Sekunden und der Nutzer verpasst das Feedback. Pills bleiben sichtbar bis zur
+nächsten Aktion.
+
+### HTML-Tabellen statt ui.table()
+Die Video-Vorschau und Rename-Preview sind als `ui.html()` gebaut statt als `ui.table()`
+oder `ui.row()`-Schleifen. Das gibt volle Kontrolle über das Styling (mt-table, mt-rename-row,
+mt-tag-*) und vermeidet Quasar-Defaults, die im Dark-Theme durchschlagen.
+
+### Video-Metadaten: encoded_date als Fallback
+DJI-Dateien haben kein `recorded_date` in pymediainfo, nur `encoded_date`/`tagged_date`.
+`get_metadata()` prüft jetzt alle drei Felder. Gleichzeitig wurde die Jahr-Erkennung
+umpriorisiert: Metadaten zuerst (zuverlässiger), Dateiname nur als Fallback.
+
 ---
 
 ## 2026-01 – NiceGUI & UI-Integration
