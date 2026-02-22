@@ -21,10 +21,11 @@ def _md5(path: Path, chunk_size: int = 65536) -> str:
     return h.hexdigest()
 
 
-def find_duplicates(folder: str) -> dict[str, list[str]]:
+def find_duplicates(folder: str, progress_cb=None) -> dict[str, list[str]]:
     """
     Scannt `folder` rekursiv.
     Gibt {hash: [pfad1, pfad2, ...]} zurück – nur Gruppen mit ≥ 2 Dateien.
+    progress_cb(scanned, total) wird optional nach jedem gehashten File aufgerufen.
     """
     # Schritt 1: nach Größe gruppieren
     by_size: dict[int, list[Path]] = defaultdict(list)
@@ -37,6 +38,10 @@ def find_duplicates(folder: str) -> dict[str, list[str]]:
                 except (OSError, PermissionError):
                     pass
 
+    # Kandidaten zählen für Fortschrittsanzeige
+    candidates_total = sum(len(paths) for paths in by_size.values() if len(paths) >= 2)
+    scanned = 0
+
     # Schritt 2: nur Kandidaten (gleiche Größe) hashen
     hashes: dict[str, list[str]] = defaultdict(list)
     for paths in by_size.values():
@@ -48,5 +53,8 @@ def find_duplicates(folder: str) -> dict[str, list[str]]:
                 hashes[h].append(str(path))
             except (OSError, PermissionError):
                 pass
+            scanned += 1
+            if progress_cb and candidates_total > 0:
+                progress_cb(scanned, candidates_total)
 
     return {h: paths for h, paths in hashes.items() if len(paths) > 1}

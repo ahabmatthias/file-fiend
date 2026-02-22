@@ -67,6 +67,10 @@ def build(tab_panel):
 
             recursive_cb = ui.checkbox("Unterordner einbeziehen")
 
+        ui.label("ⓘ Hardware-Codec (hevc_videotoolbox) – nur macOS").classes(
+            "text-xs text-gray-400"
+        )
+
         # ── Status + Spinner ───────────────────────────────────────────
         with ui.row().classes("items-center gap-3 mt-2"):
             spinner = ui.spinner(size="sm").classes("text-slate-400")

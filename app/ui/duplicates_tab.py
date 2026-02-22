@@ -47,7 +47,7 @@ def _file_icon(path: str) -> str:
     return "insert_drive_file"
 
 
-def build(tab_panel):
+def build(tab_panel, shared=None):
     """Baut den Duplikat-Finder-Tab in das übergebene tab_panel."""
     with tab_panel:
         # ── Ordner-Auswahl ─────────────────────────────────────────────
@@ -56,6 +56,9 @@ def build(tab_panel):
                 label="Ordner",
                 placeholder="/Users/du/Bilder",
             ).classes("flex-1")
+
+            if shared is not None:
+                shared["inputs"].append(folder_input)
 
             async def on_pick():
                 result = await _pick_folder()
@@ -69,6 +72,9 @@ def build(tab_panel):
             spinner = ui.spinner(size="sm").classes("text-slate-400")
             spinner.visible = False
             status_label = ui.label("").classes("text-slate-500 text-sm")
+
+        progress_bar = ui.linear_progress(value=0).props("stripe color=blue-grey")
+        progress_bar.visible = False
 
         results_col = ui.column().classes("w-full gap-4 mt-2")
         checkboxes: dict = {}
@@ -84,11 +90,23 @@ def build(tab_panel):
             status_label.set_text("Scanne …")
             results_col.clear()
             checkboxes.clear()
+            progress_bar.set_value(0)
+            progress_bar.visible = True
 
             loop = asyncio.get_event_loop()
-            dupes = await loop.run_in_executor(_executor, find_duplicates, folder)
+
+            async def _update_progress(value: float):
+                progress_bar.set_value(value)
+
+            def progress_cb(done, total):
+                asyncio.run_coroutine_threadsafe(_update_progress(done / total), loop)
+
+            dupes = await loop.run_in_executor(
+                _executor, lambda: find_duplicates(folder, progress_cb)
+            )
 
             spinner.visible = False
+            progress_bar.visible = False
 
             if not dupes:
                 status_label.set_text("Keine Duplikate gefunden.")

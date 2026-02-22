@@ -13,7 +13,7 @@ from app.ui.utils import pick_folder
 _executor = ThreadPoolExecutor(max_workers=1)
 
 
-def build(tab_panel):
+def build(tab_panel, shared=None):
     """Baut den Jahr-Organisations-Tab in das übergebene tab_panel."""
     with tab_panel:
         # ── Ordner-Auswahl ─────────────────────────────────────────────
@@ -22,6 +22,9 @@ def build(tab_panel):
                 label="Ordner",
                 placeholder="/Users/du/Bilder",
             ).classes("flex-1")
+
+            if shared is not None:
+                shared["inputs"].append(folder_input)
 
             async def on_pick():
                 result = await pick_folder()
@@ -32,12 +35,16 @@ def build(tab_panel):
 
         # ── Kamera-Checkbox ────────────────────────────────────────────
         camera_checkbox = ui.checkbox("Nach Kamera untergliedern").classes("mt-1")
+        ui.label("ⓘ Benötigt EXIF-Daten in den Dateien").classes("text-xs text-gray-400")
 
         # ── Status + Spinner ───────────────────────────────────────────
         with ui.row().classes("items-center gap-3 mt-2"):
             spinner = ui.spinner(size="sm").classes("text-slate-400")
             spinner.visible = False
             status_label = ui.label("").classes("text-slate-500 text-sm")
+
+        progress_bar = ui.linear_progress(value=0).props("stripe")
+        progress_bar.visible = False
 
         preview_col = ui.column().classes("w-full gap-2 mt-2")
         _state: dict = {"scan": None, "folder": None}
@@ -59,15 +66,26 @@ def build(tab_panel):
             _state["scan"] = None
             _state["folder"] = None
             btn_execute.disable()
+            progress_bar.set_value(0)
+            progress_bar.visible = True
 
             from app.core.year_org import scan_folder  # noqa: PLC0415
 
             loop = asyncio.get_event_loop()
+
+            async def _update_scan_progress(value: float):
+                progress_bar.set_value(value)
+
+            def scan_progress_cb(done, total):
+                asyncio.run_coroutine_threadsafe(_update_scan_progress(done / total), loop)
+
             result = await loop.run_in_executor(
-                _executor, lambda: scan_folder(folder, group_by_camera)
+                _executor,
+                lambda: scan_folder(folder, group_by_camera, progress_cb=scan_progress_cb),
             )
 
             spinner.visible = False
+            progress_bar.visible = False
 
             if not result["files_by_year"]:
                 status_label.set_text("Keine Dateien mit erkennbarem Jahr gefunden.")
@@ -151,16 +169,27 @@ def build(tab_panel):
             status_label.set_text("Organisiere …")
             btn_execute.disable()
             preview_col.clear()
+            progress_bar.set_value(0)
+            progress_bar.visible = True
 
             from app.core.year_org import execute_organization  # noqa: PLC0415
 
             group_by_camera = _state["scan"].get("group_by_camera", False)
             loop = asyncio.get_event_loop()
+
+            async def _update_exec_progress(value: float):
+                progress_bar.set_value(value)
+
+            def exec_progress_cb(done, total):
+                asyncio.run_coroutine_threadsafe(_update_exec_progress(done / total), loop)
+
             result = await loop.run_in_executor(
-                _executor, lambda: execute_organization(folder, group_by_camera)
+                _executor,
+                lambda: execute_organization(folder, group_by_camera, progress_cb=exec_progress_cb),
             )
 
             spinner.visible = False
+            progress_bar.visible = False
 
             if result.get("error"):
                 ui.notify(result["error"], type="negative")

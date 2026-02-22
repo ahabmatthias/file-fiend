@@ -28,11 +28,6 @@ from app.core.constants import ALL_MEDIA_EXTS, IMAGE_EXTS
 from app.core.renamer import get_metadata
 
 _EXIF_DATETIME_TAGS = (36867, 36868, 306)  # DateTimeOriginal, DateTimeDigitized, DateTime
-_CAMERA_MAPPINGS = {
-    "GH5": "Lumix",
-    "GX80": "Lumix",
-    "DJI": "Osmo",
-}
 # Matcht XMP-Datumsattribute wie MetadataDate="2024-..." oder DateTimeOriginal>2024...
 _XMP_DATE_RE = re.compile(
     r'(?:DateTimeOriginal|CreateDate|DateCreated|MetadataDate)[="\s>:]+(\d{4})'
@@ -197,27 +192,19 @@ def _detect_camera(file_path: Path) -> str:
     except Exception:
         meta = {}
 
-    # 1. EXIF model
-    model = meta.get("model", "")
+    # 1. EXIF model direkt verwenden
+    model = str(meta.get("model", "")).strip()
     if model:
-        if "DC-GH5" in model or "GH5" in model:
-            return _CAMERA_MAPPINGS["GH5"]
-        if "DMC-GX80" in model or "GX80" in model:
-            return _CAMERA_MAPPINGS["GX80"]
-        if "PP-101" in model or "DJI" in model:
-            return _CAMERA_MAPPINGS["DJI"]
+        return model
 
-    # 2. EXIF make
-    make = meta.get("make", "")
+    # 2. EXIF make als Fallback
+    make = str(meta.get("make", "")).strip()
     if make:
-        if "DJI" in make:
-            return _CAMERA_MAPPINGS["DJI"]
-        if "Panasonic" in make:
-            return _CAMERA_MAPPINGS["GX80"]
+        return make
 
     # 3. Dateiname-Präfix
     if file_path.name.upper().startswith("DJI_"):
-        return _CAMERA_MAPPINGS["DJI"]
+        return "DJI"
 
     return "Sonstige"
 
@@ -249,12 +236,13 @@ def _extract_year(file_path: Path) -> int | None:
     return None
 
 
-def _collect_files_with_years(folder_path: str, group_by_camera: bool = False):
+def _collect_files_with_years(folder_path: str, group_by_camera: bool = False, progress_cb=None):
     """
     Sammelt Mediendateien und gruppiert sie nach Jahr (und optional Kamera).
 
     Rückgabe wenn group_by_camera=False: ({year: [Path, ...]}, invalid_files)
     Rückgabe wenn group_by_camera=True:  ({year: {camera: [Path, ...]}}, invalid_files)
+    progress_cb(done, total) wird optional nach jeder verarbeiteten Datei aufgerufen.
     """
     folder = Path(folder_path)
     if group_by_camera:
@@ -263,20 +251,23 @@ def _collect_files_with_years(folder_path: str, group_by_camera: bool = False):
         files_by_year = defaultdict(list)
     invalid_files = []
 
-    for file_path in folder.rglob("*"):
-        if not file_path.is_file():
-            continue
+    # Pre-collect für Fortschrittsanzeige
+    all_files = [
+        f
+        for f in folder.rglob("*")
         if (
-            file_path.name.startswith("._")
-            or file_path.name == ".DS_Store"
-            or file_path.name.startswith("rename_log_")
-            or file_path.name.startswith("camera_rename_log_")
-            or file_path.parent.name == "duplicates"
-        ):
-            continue
-        if file_path.suffix.lower() not in ALL_MEDIA_EXTS:
-            continue
+            f.is_file()
+            and not f.name.startswith("._")
+            and f.name != ".DS_Store"
+            and not f.name.startswith("rename_log_")
+            and not f.name.startswith("camera_rename_log_")
+            and f.parent.name != "duplicates"
+            and f.suffix.lower() in ALL_MEDIA_EXTS
+        )
+    ]
+    total = len(all_files)
 
+    for i, file_path in enumerate(all_files, 1):
         year = _extract_year(file_path)
         if year is None:
             invalid_files.append(
@@ -291,10 +282,13 @@ def _collect_files_with_years(folder_path: str, group_by_camera: bool = False):
         else:
             files_by_year[year].append(file_path)
 
+        if progress_cb and total > 0:
+            progress_cb(i, total)
+
     return files_by_year, invalid_files
 
 
-def scan_folder(folder_path: str, group_by_camera: bool = False) -> dict:
+def scan_folder(folder_path: str, group_by_camera: bool = False, progress_cb=None) -> dict:
     """
     Scannt den Ordner und gibt eine Vorschau zurück – ohne Dateien zu bewegen
     und ohne Log-File zu schreiben.
@@ -319,7 +313,9 @@ def scan_folder(folder_path: str, group_by_camera: bool = False) -> dict:
     """
     folder = Path(folder_path)
 
-    files_by_year, invalid_files = _collect_files_with_years(folder_path, group_by_camera)
+    files_by_year, invalid_files = _collect_files_with_years(
+        folder_path, group_by_camera, progress_cb=progress_cb
+    )
 
     # Konflikt-Prüfung braucht flache {year: [Path, ...]} Struktur
     conflicts: list = []
@@ -383,7 +379,7 @@ def _move_with_camera_groups(files_by_year: dict, folder: Path):
     return moved_files, errors
 
 
-def execute_organization(folder_path: str, group_by_camera: bool = False) -> dict:
+def execute_organization(folder_path: str, group_by_camera: bool = False, progress_cb=None) -> dict:
     """
     Führt die Jahr-Organisation durch (verschiebt Dateien, löscht leere Ordner).
 
@@ -400,7 +396,9 @@ def execute_organization(folder_path: str, group_by_camera: bool = False) -> dic
     """
     folder = Path(folder_path)
 
-    files_by_year, invalid_files = _collect_files_with_years(folder_path, group_by_camera)
+    files_by_year, invalid_files = _collect_files_with_years(
+        folder_path, group_by_camera, progress_cb=progress_cb
+    )
 
     if not files_by_year:
         return {

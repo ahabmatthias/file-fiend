@@ -89,12 +89,13 @@ def _generate_filename(file_path: Path, metadata: dict) -> str:
     return f"{date_str}_{file_path.stem}{ext}"
 
 
-def collect_files(folder_path: str) -> list[dict]:
-    """Sammelt alle Mediendateien im Ordner (rekursiv)."""
+def collect_files(folder_path: str, recursive: bool = True) -> list[dict]:
+    """Sammelt alle Mediendateien im Ordner."""
     folder = Path(folder_path)
     files = []
 
-    for file_path in folder.rglob("*"):
+    glob_fn = folder.rglob if recursive else folder.glob
+    for file_path in glob_fn("*"):
         if (
             file_path.is_file()
             and file_path.suffix.lower() in _SUPPORTED_EXTS

@@ -15,7 +15,7 @@ from app.ui.utils import short_path as _short_path
 _executor = ThreadPoolExecutor(max_workers=1)
 
 
-def build(tab_panel):
+def build(tab_panel, shared=None):
     """Baut den Media-Renamer-Tab in das übergebene tab_panel."""
     with tab_panel:
         # ── Ordner-Auswahl ─────────────────────────────────────────────
@@ -25,12 +25,17 @@ def build(tab_panel):
                 placeholder="/Users/du/Bilder",
             ).classes("flex-1")
 
+            if shared is not None:
+                shared["inputs"].append(folder_input)
+
             async def on_pick():
                 result = await pick_folder()
                 if result:
                     folder_input.set_value(result)
 
             ui.button("Ordner wählen", on_click=on_pick, icon="folder_open")
+
+        cb_recursive = ui.checkbox("Mit Unterordnern", value=True).classes("mt-1")
 
         # ── Status + Spinner ───────────────────────────────────────────
         with ui.row().classes("items-center gap-3 mt-2"):
@@ -61,7 +66,10 @@ def build(tab_panel):
             from app.core.renamer import collect_files, process_files  # noqa: PLC0415
 
             loop = asyncio.get_event_loop()
-            files = await loop.run_in_executor(_executor, collect_files, folder)
+            recursive = cb_recursive.value
+            files = await loop.run_in_executor(
+                _executor, lambda: collect_files(folder, recursive=recursive)
+            )
 
             if not files:
                 spinner.visible = False
