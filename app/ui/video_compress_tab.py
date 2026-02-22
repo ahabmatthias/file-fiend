@@ -54,9 +54,9 @@ def build(tab_panel):
             codec_select = ui.select(
                 label="Codec",
                 options={
-                    "auto": "Auto (empfohlen)",
-                    "hevc_videotoolbox": "VideoToolbox (HW)",
-                    "libx265": "libx265 (SW)",
+                    "auto": "Automatisch",
+                    "hevc_videotoolbox": "Hardware (schnell)",
+                    "libx265": "Software (langsam)",
                 },
                 value="auto",
             ).classes("w-52")
@@ -65,7 +65,7 @@ def build(tab_panel):
                 "w-32"
             )
 
-            recursive_cb = ui.checkbox("Rekursiv")
+            recursive_cb = ui.checkbox("Unterordner einbeziehen")
 
         # ── Status + Spinner ───────────────────────────────────────────
         with ui.row().classes("items-center gap-3 mt-2"):
