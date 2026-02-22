@@ -19,23 +19,10 @@ _ACTION_LABEL = {
 }
 
 
-def build(tab_panel):
+def build(tab_panel, shared=None):
     """Baut den Video-Komprimierungs-Tab in das übergebene tab_panel."""
     with tab_panel:
         # ── Ordner-Auswahl ─────────────────────────────────────────────
-        with ui.row().classes("w-full items-center gap-2"):
-            source_input = ui.input(
-                label="Quellordner",
-                placeholder="/Users/du/Videos",
-            ).classes("flex-1")
-
-            async def on_pick_source():
-                result = await pick_folder()
-                if result:
-                    source_input.set_value(result)
-
-            ui.button("Ordner wählen", on_click=on_pick_source, icon="folder_open")
-
         with ui.row().classes("w-full items-center gap-2 mt-1"):
             target_input = ui.input(
                 label="Zielordner",
@@ -65,7 +52,7 @@ def build(tab_panel):
                 "w-32"
             )
 
-            recursive_cb = ui.checkbox("Unterordner einbeziehen")
+            recursive_cb = ui.checkbox("Mit Unterordnern")
 
         ui.label("ⓘ Hardware-Codec (hevc_videotoolbox) – nur macOS").classes(
             "text-xs text-gray-400"
@@ -82,7 +69,7 @@ def build(tab_panel):
 
         # ── Vorschau ───────────────────────────────────────────────────
         async def do_preview():
-            source = source_input.value.strip()
+            source = shared["folder"].strip() if shared else ""
             target = target_input.value.strip()
 
             if not source:

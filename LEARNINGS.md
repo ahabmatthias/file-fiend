@@ -282,6 +282,29 @@ mit Opus (oder manuell) nach mehreren Sonnet-Sessions fängt genau diese Klasse 
 
 ---
 
+## 2026-02 – UX-Konsistenz-Pass
+
+### Labels konsistent über Tabs halten
+Beim Umbenennen-Tab hieß die Checkbox schon „Mit Unterordnern", beim Video-Tab noch
+„Unterordner einbeziehen". Beides beschreibt dasselbe – unterschiedliche Formulierungen
+ohne Grund verwirren. Konsequenz: eine App, eine Formulierung.
+
+### Ausnahme-Entscheidungen regelmäßig hinterfragen
+Phase 1b hatte den Video-Tab bewusst ausgenommen: „genuiner Bedarf für eigene Picker"
+(Quell- und Zielordner). In der Praxis zeigte sich, dass der Quellordner immer der
+globale Ordner ist – nur der Zielordner ist wirklich Video-spezifisch.
+Der Quellordner-Picker im Tab war also doch redundant und wurde entfernt.
+
+**Muster:** Ausnahmen beim nächsten Review-Pass aktiv in Frage stellen, nicht als
+dauerhaft gesetzt betrachten.
+
+### Tipp-Texte nur wenn wirklich nötig
+„Tipp: Mindestens eine Kopie behalten!" im Duplikate-Tab war überflüssig – der
+Bestätigungsdialog mit „Endgültig löschen" kommuniziert die Konsequenz bereits klar.
+Doppelte Warnungen wirken bevormundend und stören den Fokus.
+
+---
+
 ## 2026-01 – NiceGUI & UI-Integration
 
 ### tqdm/print in Legacy-Scripts

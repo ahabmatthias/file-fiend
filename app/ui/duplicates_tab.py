@@ -170,11 +170,9 @@ def build(tab_panel, shared=None):
                     ui.button("Löschen", on_click=_confirm_and_delete, color="red")
             dialog.open()
 
-        with ui.row().classes("items-center gap-4"):
-            ui.button(
-                "Ausgewählte löschen",
-                on_click=do_delete,
-                icon="delete",
-                color="red",
-            )
-            ui.label("Tipp: Mindestens eine Kopie behalten!").classes("text-xs text-slate-400")
+        ui.button(
+            "Ausgewählte löschen",
+            on_click=do_delete,
+            icon="delete",
+            color="red",
+        )

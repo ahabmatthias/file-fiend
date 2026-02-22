@@ -52,7 +52,7 @@ def main():
             year_org_tab.build(panel_year, shared)
 
             panel_video = ui.tab_panel(tab_video)
-            video_compress_tab.build(panel_video)
+            video_compress_tab.build(panel_video, shared)
 
     ui.run(
         title="Media Tools",

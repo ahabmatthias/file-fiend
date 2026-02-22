@@ -15,7 +15,7 @@ def build(tab_panel, shared=None):
     """Baut den Jahr-Organisations-Tab in das übergebene tab_panel."""
     with tab_panel:
         # ── Kamera-Checkbox ────────────────────────────────────────────
-        camera_checkbox = ui.checkbox("Nach Kamera untergliedern").classes("mt-1")
+        camera_checkbox = ui.checkbox("Nach Kamera sortieren").classes("mt-1")
         ui.label("ⓘ Benötigt EXIF-Daten in den Dateien").classes("text-xs text-gray-400")
 
         # ── Status + Spinner ───────────────────────────────────────────
