@@ -17,7 +17,10 @@ def build(shared: dict):
     """Baut den Jahr-Organisations-Tab – wird innerhalb eines tab_panel aufgerufen."""
     # ── Kamera-Checkbox ────────────────────────────────────────────
     camera_checkbox = ui.checkbox("Nach Kamera sortieren").classes("mt-1")
-    ui.label("Benötigt EXIF-Daten in den Dateien").classes("mt-hint")
+    ui.icon("info_outline").classes("text-[#4f8ef7] text-sm cursor-default").tooltip(
+        "Kamera-Erkennung liest EXIF Make/Model aus den Dateien. "
+        "Dateien ohne EXIF landen im Ordner 'Sonstige'."
+    )
 
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):

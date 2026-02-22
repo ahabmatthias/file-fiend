@@ -68,10 +68,10 @@ def build(shared: dict):
 
                 recursive_cb = ui.checkbox("Mit Unterordnern")
 
-            ui.label(
+            ui.icon("info_outline").classes("text-[#4f8ef7] text-sm cursor-default").tooltip(
                 "Hardware nutzt den Apple-Chip direkt – schnell und stromsparend. "
                 "Software encodiert in reinem Code – langsamer, minimal präziser."
-            ).classes("mt-hint")
+            )
 
     # ── Status + Spinner ──────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-3"):
