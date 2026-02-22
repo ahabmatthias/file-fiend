@@ -94,12 +94,10 @@ def build(tab_panel):
                 return
 
             total_files = sum(len(v) for v in dupes.values())
-            status_label.set_text(
-                f"{len(dupes)} Duplikat-Gruppe(n) · {total_files} Dateien"
-            )
+            status_label.set_text(f"{len(dupes)} Duplikat-Gruppe(n) · {total_files} Dateien")
 
             with results_col:
-                for group_hash, paths in dupes.items():
+                for _group_hash, paths in dupes.items():
                     with ui.card().classes("w-full p-3"):
                         for path in paths:
                             size_kb = Path(path).stat().st_size // 1024
@@ -107,9 +105,7 @@ def build(tab_panel):
                             with ui.row().classes("items-center gap-3 w-full"):
                                 # Vorschau
                                 if url:
-                                    ui.image(url).classes(
-                                        "w-20 h-20 object-cover rounded"
-                                    )
+                                    ui.image(url).classes("w-20 h-20 object-cover rounded")
                                 else:
                                     with ui.element("div").classes(
                                         "w-20 h-20 flex items-center justify-center "
@@ -128,9 +124,7 @@ def build(tab_panel):
                                     ui.label(short).classes(
                                         "text-xs text-slate-400 truncate max-w-lg"
                                     )
-                                    ui.label(f"{size_kb} KB").classes(
-                                        "text-xs text-slate-400"
-                                    )
+                                    ui.label(f"{size_kb} KB").classes("text-xs text-slate-400")
                                 checkboxes[cb] = path
 
         ui.button("Scannen", on_click=do_scan, icon="search")
@@ -147,6 +141,9 @@ def build(tab_panel):
             deleted, errors = 0, []
             for path in to_delete:
                 try:
+                    if os.path.islink(path):
+                        errors.append(f"{path}: Symlinks werden nicht gelöscht")
+                        continue
                     os.remove(path)
                     deleted += 1
                 except OSError as e:
@@ -165,6 +162,4 @@ def build(tab_panel):
                 icon="delete",
                 color="red",
             )
-            ui.label("Tipp: Mindestens eine Kopie behalten!").classes(
-                "text-xs text-slate-400"
-            )
+            ui.label("Tipp: Mindestens eine Kopie behalten!").classes("text-xs text-slate-400")

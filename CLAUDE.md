@@ -27,6 +27,10 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
   - Ordner auswählen
   - Vorschau der Ordnerstruktur
   - Sortierung ausführen
+- [x] Schritt 5b: Jahr-Ordner-Tool – optionale Kamera-Unterordner
+  - Checkbox „Nach Kamera untergliedern" (Standard: aus)
+  - Vorschau zeigt `year/camera`-Baum wenn aktiviert
+  - Ausführen legt `<year>/<camera>/`-Struktur an
 
 ### Phase 2: Packaging
 
@@ -42,7 +46,7 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
 
 ## Stack
 
-- Python 3.9+
+- Python 3.10+ (3.13 empfohlen – venv nutzt 3.13)
 - [NiceGUI](https://nicegui.io) – UI-Framework (Web-basiert, native Window via pywebview)
 - pywebview – für natives macOS-Fenster
 - bestehende Scripts in `app/core/` einbinden
