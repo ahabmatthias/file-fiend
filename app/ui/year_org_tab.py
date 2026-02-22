@@ -78,7 +78,8 @@ def build(shared: dict):
             progress_bar.set_value(value)
 
         def scan_progress_cb(done, total):
-            asyncio.run_coroutine_threadsafe(_update_scan_progress(done / total), loop)
+            if total > 0:
+                asyncio.run_coroutine_threadsafe(_update_scan_progress(done / total), loop)
 
         result = await loop.run_in_executor(
             _executor,
@@ -200,7 +201,8 @@ def build(shared: dict):
             progress_bar.set_value(value)
 
         def exec_progress_cb(done, total):
-            asyncio.run_coroutine_threadsafe(_update_exec_progress(done / total), loop)
+            if total > 0:
+                asyncio.run_coroutine_threadsafe(_update_exec_progress(done / total), loop)
 
         result = await loop.run_in_executor(
             _executor,

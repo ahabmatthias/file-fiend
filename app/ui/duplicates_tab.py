@@ -80,7 +80,8 @@ def build(shared: dict):
             progress_bar.set_value(value)
 
         def progress_cb(done, total):
-            asyncio.run_coroutine_threadsafe(_update_progress(done / total), loop)
+            if total > 0:
+                asyncio.run_coroutine_threadsafe(_update_progress(done / total), loop)
 
         dupes = await loop.run_in_executor(_executor, lambda: find_duplicates(folder, progress_cb))
 

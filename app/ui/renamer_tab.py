@@ -78,6 +78,7 @@ def build(shared: dict):
 
         spinner.visible = False
         _state["files"] = files
+        _state["renames"] = results["renames"]
         all_changes = results["renames"]
 
         status_label.set_text(f"{len(files)} Dateien gefunden")
@@ -152,7 +153,7 @@ def build(shared: dict):
         if not _state.get("files") or not _state.get("has_preview"):
             return
 
-        n_renames = len([f for f in _state["files"] if not f["is_renamed"]])
+        n_renames = len(_state.get("renames", []))
 
         async def _confirm_and_rename():
             dialog.close()
