@@ -22,7 +22,7 @@ def main():
             shared_input = ui.input(
                 label="Ordner",
                 placeholder="/Users/du/Bilder",
-                on_value_change=lambda e: shared.update({"folder": e.value}),
+                on_change=lambda e: shared.update({"folder": e.value}),
             ).classes("flex-1")
 
             async def on_pick_shared():
