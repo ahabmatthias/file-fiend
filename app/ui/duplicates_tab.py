@@ -12,7 +12,6 @@ from nicegui import ui
 
 from app.core.constants import IMAGE_EXTS, VIDEO_EXTS
 from app.core.duplicates import find_duplicates
-from app.ui.utils import pick_folder as _pick_folder
 from app.ui.utils import short_path as _short_path
 
 _executor = ThreadPoolExecutor(max_workers=1)
@@ -50,23 +49,6 @@ def _file_icon(path: str) -> str:
 def build(tab_panel, shared=None):
     """Baut den Duplikat-Finder-Tab in das übergebene tab_panel."""
     with tab_panel:
-        # ── Ordner-Auswahl ─────────────────────────────────────────────
-        with ui.row().classes("w-full items-center gap-2"):
-            folder_input = ui.input(
-                label="Ordner",
-                placeholder="/Users/du/Bilder",
-            ).classes("flex-1")
-
-            if shared is not None:
-                shared["inputs"].append(folder_input)
-
-            async def on_pick():
-                result = await _pick_folder()
-                if result:
-                    folder_input.set_value(result)
-
-            ui.button("Ordner wählen", on_click=on_pick, icon="folder_open")
-
         # ── Status + Spinner ───────────────────────────────────────────
         with ui.row().classes("items-center gap-3 mt-2"):
             spinner = ui.spinner(size="sm").classes("text-slate-400")
@@ -81,7 +63,7 @@ def build(tab_panel, shared=None):
 
         # ── Scan ───────────────────────────────────────────────────────
         async def do_scan():
-            folder = folder_input.value.strip()
+            folder = shared["folder"].strip() if shared else ""
             if not folder or not os.path.isdir(folder):
                 ui.notify("Bitte einen gültigen Ordner eingeben.", type="negative")
                 return

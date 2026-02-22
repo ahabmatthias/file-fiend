@@ -8,31 +8,12 @@ from concurrent.futures import ThreadPoolExecutor
 
 from nicegui import ui
 
-from app.ui.utils import pick_folder
-
 _executor = ThreadPoolExecutor(max_workers=1)
 
 
 def build(tab_panel, shared=None):
     """Baut den Jahr-Organisations-Tab in das übergebene tab_panel."""
     with tab_panel:
-        # ── Ordner-Auswahl ─────────────────────────────────────────────
-        with ui.row().classes("w-full items-center gap-2"):
-            folder_input = ui.input(
-                label="Ordner",
-                placeholder="/Users/du/Bilder",
-            ).classes("flex-1")
-
-            if shared is not None:
-                shared["inputs"].append(folder_input)
-
-            async def on_pick():
-                result = await pick_folder()
-                if result:
-                    folder_input.set_value(result)
-
-            ui.button("Ordner wählen", on_click=on_pick, icon="folder_open")
-
         # ── Kamera-Checkbox ────────────────────────────────────────────
         camera_checkbox = ui.checkbox("Nach Kamera untergliedern").classes("mt-1")
         ui.label("ⓘ Benötigt EXIF-Daten in den Dateien").classes("text-xs text-gray-400")
@@ -51,7 +32,7 @@ def build(tab_panel, shared=None):
 
         # ── Vorschau ───────────────────────────────────────────────────
         async def do_preview():
-            folder = folder_input.value.strip()
+            folder = shared["folder"].strip() if shared else ""
             if not folder:
                 ui.notify("Bitte einen Ordner eingeben.", type="negative")
                 return

@@ -9,7 +9,6 @@ from pathlib import Path
 
 from nicegui import ui
 
-from app.ui.utils import pick_folder
 from app.ui.utils import short_path as _short_path
 
 _executor = ThreadPoolExecutor(max_workers=1)
@@ -18,23 +17,6 @@ _executor = ThreadPoolExecutor(max_workers=1)
 def build(tab_panel, shared=None):
     """Baut den Media-Renamer-Tab in das übergebene tab_panel."""
     with tab_panel:
-        # ── Ordner-Auswahl ─────────────────────────────────────────────
-        with ui.row().classes("w-full items-center gap-2"):
-            folder_input = ui.input(
-                label="Ordner",
-                placeholder="/Users/du/Bilder",
-            ).classes("flex-1")
-
-            if shared is not None:
-                shared["inputs"].append(folder_input)
-
-            async def on_pick():
-                result = await pick_folder()
-                if result:
-                    folder_input.set_value(result)
-
-            ui.button("Ordner wählen", on_click=on_pick, icon="folder_open")
-
         cb_recursive = ui.checkbox("Mit Unterordnern", value=True).classes("mt-1")
 
         # ── Status + Spinner ───────────────────────────────────────────
@@ -48,7 +30,7 @@ def build(tab_panel, shared=None):
 
         # ── Vorschau ───────────────────────────────────────────────────
         async def do_preview():
-            folder = folder_input.value.strip()
+            folder = shared["folder"].strip() if shared else ""
             if not folder:
                 ui.notify("Bitte einen Ordner eingeben.", type="negative")
                 return

@@ -16,12 +16,13 @@ def main():
 
     with ui.column().classes("w-full max-w-4xl mx-auto p-6"):
         # ── Gemeinsamer Ordner-Picker ────────────────────────────────────
-        shared: dict = {"folder": "", "inputs": []}
+        shared: dict = {"folder": ""}
 
         with ui.row().classes("w-full items-center gap-2 mb-2"):
             shared_input = ui.input(
-                label="Ordner (gemeinsam)",
+                label="Ordner",
                 placeholder="/Users/du/Bilder",
+                on_value_change=lambda e: shared.update({"folder": e.value}),
             ).classes("flex-1")
 
             async def on_pick_shared():
@@ -29,8 +30,6 @@ def main():
                 if result:
                     shared["folder"] = result
                     shared_input.set_value(result)
-                    for inp in shared["inputs"]:
-                        inp.set_value(result)
 
             ui.button("Ordner wählen", on_click=on_pick_shared, icon="folder_open")
 
