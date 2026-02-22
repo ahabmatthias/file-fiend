@@ -32,6 +32,15 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
   - Vorschau zeigt `year/camera`-Baum wenn aktiviert
   - Ausführen legt `<year>/<camera>/`-Struktur an
 
+### Phase 1b: UX-Verbesserungen
+
+- [ ] Gemeinsamer Ordner-Picker: globalen Ordner in Header/oberhalb der Tabs, Tabs lesen aus shared State (Video-Tab behält eigene Quell-/Zielordner)
+- [ ] Fortschrittsanzeige für Duplikat-Scan und Jahr-Organisation (nicht nur Spinner)
+- [ ] Kamera-Mapping konfigurierbar machen oder EXIF Make/Model direkt als Ordnername nutzen
+- [ ] Hinweis bei Kamera-Checkbox: EXIF-Daten nötig
+- [ ] Hinweis bei Video-Tab: Hardware-Codec ist macOS-only
+- [ ] Renamer: Option für nicht-rekursiven Scan
+
 ### Phase 2: Packaging
 
 - [ ] Schritt 6: Als macOS `.app` verpacken
