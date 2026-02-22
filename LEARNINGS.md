@@ -33,6 +33,41 @@ Chronologisches Lerntagebuch – für mich zum Nachschlagen, nicht als Projektdo
 
 ---
 
+## 2026-02 – Projekt-Aufräumen: Legacy-Scripts entfernen
+
+### Ausgangslage
+Drei Root-Scripts (`unified_media_renamer.py`, `video_compress.py`, `year_folder_script.py`)
+lagen im Projekt-Root, weil die App-Module ursprünglich nur Wrapper um diese Scripts waren.
+Über die Zeit war die gesamte Logik aber in `app/core/` gewachsen – die Root-Scripts waren
+nurmehr Ballast.
+
+### Wrapper-Falle
+`app/core/renamer.py` und `app/core/year_org.py` importierten aktiv aus den Legacy-Scripts.
+Das sah harmlos aus (`from unified_media_renamer import collect_files`), bedeutete aber:
+Löschen der Root-Scripts hätte die App sofort gebrochen. Der erste Schritt beim Aufräumen
+muss immer sein: **Wo wird das tatsächlich noch importiert?**
+
+```bash
+grep -r "unified_media_renamer\|year_folder_script" app/
+```
+
+### Vorgehen
+1. Core-Module neu schreiben (Logik direkt einbetten, Legacy-Import entfernen)
+2. Test-Imports anpassen (Tests importierten z.T. noch direkt aus Root-Scripts)
+3. Root-Scripts löschen
+4. Tests laufen lassen – erst dann committen
+
+### Was sonst noch weg kam
+- `README.md` – veraltet, beschrieb noch die CLI-Scripts; wird am Projektabschluss neu geschrieben
+- `requirements-dev.txt` – in `pyproject.toml` unter `[project.optional-dependencies]` konsolidiert;
+  Dev-Tools (ruff, mypy, pytest) sind damit zentral an einer Stelle
+
+### Muster: Branch für Aufräum-Arbeiten
+Strukturelle Änderungen (viele Löschungen, Imports umschreiben) immer auf einem eigenen Branch –
+falls Tests rot werden oder etwas unerwartet kaputt geht, kann man einfach zurück zu main.
+
+---
+
 ## 2026-02 – Startup-Performance: Lazy Imports
 
 ### Problem
