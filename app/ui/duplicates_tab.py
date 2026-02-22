@@ -98,8 +98,10 @@ def build(shared: dict):
             for _group_hash, paths in dupes.items():
                 with ui.element("div").classes("mt-dupe-group"):
                     hash_short = _group_hash[:12]
-                    ui.element("div").classes("mt-dupe-header").text(
+                    ui.html(
+                        f'<div class="mt-dupe-header">'
                         f"{len(paths)} Dateien · Hash {hash_short}…"
+                        f"</div>"
                     )
                     for path in paths:
                         try:
@@ -130,8 +132,8 @@ def build(shared: dict):
                                 with ui.column().classes("flex-1 gap-0"):
                                     cb = ui.checkbox(Path(path).name)
                                     short = _short_path(path, folder)
-                                    ui.element("div").classes("mt-dupe-path").text(short)
-                                    ui.element("div").classes("mt-dupe-path").text(f"{size_kb} KB")
+                                    ui.html(f'<div class="mt-dupe-path">{short}</div>')
+                                    ui.html(f'<div class="mt-dupe-path">{size_kb} KB</div>')
                                 checkboxes[cb] = path
 
     ui.button("Scannen", on_click=do_scan, icon="search").classes("mt-btn-primary").props("no-caps")

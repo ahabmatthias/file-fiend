@@ -9,6 +9,7 @@ from pathlib import Path
 
 from nicegui import ui
 
+from app.ui import theme
 from app.ui.utils import short_path as _short_path
 
 _executor = ThreadPoolExecutor(max_workers=1)
@@ -20,12 +21,27 @@ def build(shared: dict):
 
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
-        spinner = ui.spinner(size="sm").classes("text-slate-400")
+        spinner = ui.spinner(size="sm").classes("text-[#4f8ef7]")
         spinner.visible = False
-        status_label = ui.label("").classes("text-slate-500 text-sm")
+        status_label = ui.label("").classes("mt-hint")
 
-    preview_col = ui.column().classes("w-full gap-2 mt-2")
+    # ── Pills-Zeile (wird nach Scan / Ausführen befüllt) ──────────
+    pills_row = ui.row().classes("items-center gap-2 mt-1")
+    pills_row.visible = False
+
+    preview_col = ui.column().classes("w-full gap-0 mt-2")
     _state: dict = {"files": None, "has_preview": False}
+
+    def _show_pills(renames: int, unchanged: int, errors: int):
+        pills_row.clear()
+        pills_row.visible = True
+        with pills_row:
+            if renames:
+                theme.pill(f"{renames} umbenennen", "neutral")
+            if unchanged:
+                theme.pill(f"{unchanged} korrekt", "good")
+            if errors:
+                theme.pill(f"{errors} Fehler", "danger")
 
     # ── Vorschau ───────────────────────────────────────────────────
     async def do_preview():
@@ -40,6 +56,7 @@ def build(shared: dict):
         spinner.visible = True
         status_label.set_text("Scanne …")
         preview_col.clear()
+        pills_row.visible = False
         _state["files"] = None
         _state["has_preview"] = False
         btn_rename.disable()
@@ -63,38 +80,35 @@ def build(shared: dict):
         _state["files"] = files
         all_changes = results["renames"]
 
-        status_label.set_text(
-            f"{len(files)} Dateien gefunden · "
-            f"{len(all_changes)} würden umbenannt · "
-            f"{results['unchanged']} bereits korrekt · "
-            f"{results['errors']} Fehler"
-        )
+        status_label.set_text(f"{len(files)} Dateien gefunden")
+        _show_pills(len(all_changes), results["unchanged"], results["errors"])
 
         if all_changes:
             _state["has_preview"] = True
             btn_rename.enable()
             with preview_col:
-                with ui.card().classes("w-full"):
-                    ui.label("Vorschau (alt → neu):").classes("font-semibold text-sm mb-2")
+                with ui.element("div").classes("mt-card"):
+                    ui.html('<div class="mt-card-header">Vorschau</div>')
                     for item in all_changes[:50]:
                         old_short = _short_path(str(Path(folder) / item["old_name"]), folder)
                         new_short = _short_path(str(Path(folder) / item["new_name"]), folder)
-                        with ui.row().classes("w-full items-center gap-2"):
-                            ui.label(old_short).classes(
-                                "text-red-400 flex-1 truncate font-mono text-xs"
-                            )
-                            ui.icon("arrow_forward").classes("text-slate-400 text-xs")
-                            ui.label(new_short).classes(
-                                "text-green-400 flex-1 truncate font-mono text-xs"
-                            )
+                        ui.html(
+                            f'<div class="mt-rename-row">'
+                            f'<span class="mt-rename-old">{old_short}</span>'
+                            f'<span class="mt-rename-arrow">→</span>'
+                            f'<span class="mt-rename-new">{new_short}</span>'
+                            f"</div>"
+                        )
                     if len(all_changes) > 50:
                         ui.label(f"… und {len(all_changes) - 50} weitere").classes(
-                            "text-xs text-slate-400 mt-1"
+                            "mt-hint px-3 py-2"
                         )
         else:
-            status_label.set_text("Alle Dateien bereits korrekt benannt. ✓")
+            status_label.set_text("Alle Dateien bereits korrekt benannt.")
 
-    ui.button("Vorschau", on_click=do_preview, icon="preview").classes("mt-2")
+    ui.button("Vorschau", on_click=do_preview, icon="preview").classes("mt-btn-primary mt-2").props(
+        "no-caps"
+    )
 
     ui.separator().classes("mt-4")
 
@@ -104,6 +118,7 @@ def build(shared: dict):
         status_label.set_text("Benenne um …")
         btn_rename.disable()
         preview_col.clear()
+        pills_row.visible = False
 
         from app.core.renamer import process_files  # noqa: PLC0415
 
@@ -113,20 +128,23 @@ def build(shared: dict):
 
         spinner.visible = False
         total = len(results["renames"])
-        msg = f"{total} Datei(en) umbenannt."
-        if results["errors"]:
-            msg += f"  {results['errors']} Fehler."
-        ui.notify(msg, type="positive" if not results["errors"] else "warning")
+
+        status_label.set_text(f"{total} Datei(en) umbenannt")
+        _show_pills(0, total, results["errors"])
 
         if results.get("error_details"):
             with preview_col:
-                with ui.card().classes("w-full"):
-                    ui.label("Fehler:").classes("font-semibold text-sm text-red-400 mb-1")
+                with ui.element("div").classes("mt-card"):
+                    ui.html('<div class="mt-card-header">Fehler</div>')
                     for err in results["error_details"][:20]:
-                        ui.label(f"{err['file']}: {err['error']}").classes(
-                            "text-xs text-red-300 font-mono"
+                        ui.html(
+                            f'<div class="mt-rename-row">'
+                            f'<span class="mt-rename-old">{err["file"]}</span>'
+                            f'<span class="mt-rename-arrow">✕</span>'
+                            f'<span style="color:#f87171">{err["error"]}</span>'
+                            f"</div>"
                         )
-        status_label.set_text(msg)
+
         _state["files"] = None
         _state["has_preview"] = False
 
@@ -140,20 +158,27 @@ def build(shared: dict):
             dialog.close()
             await _execute_rename()
 
-        with ui.dialog() as dialog, ui.card():
-            ui.label(f"{n_renames} Datei(en) umbenennen?").classes("font-semibold")
-            ui.label("Die Originalnamen gehen verloren.").classes("text-sm text-slate-500")
+        with ui.dialog() as dialog, ui.card().classes("mt-card"):
+            ui.label(f"{n_renames} Datei(en) umbenennen?").classes("font-semibold text-[#e2e8f0]")
+            ui.label("Die Originalnamen gehen verloren.").classes("mt-hint")
             with ui.row().classes("w-full justify-end gap-2 mt-2"):
-                ui.button("Abbrechen", on_click=dialog.close)
-                ui.button("Umbenennen", on_click=_confirm_and_rename, color="green")
+                ui.button("Abbrechen", on_click=dialog.close).classes("mt-btn-ghost").props(
+                    "no-caps"
+                )
+                ui.button("Umbenennen", on_click=_confirm_and_rename).classes(
+                    "mt-btn-success"
+                ).props("no-caps")
         dialog.open()
 
-    btn_rename = ui.button(
-        "Umbenennen ausführen",
-        on_click=do_rename,
-        icon="drive_file_rename_outline",
-        color="green",
+    btn_rename = (
+        ui.button(
+            "Umbenennen ausführen",
+            on_click=do_rename,
+            icon="drive_file_rename_outline",
+        )
+        .classes("mt-btn-success")
+        .props("no-caps")
     )
     btn_rename.disable()
 
-    ui.label("Tipp: Vorher Backup erstellen!").classes("text-xs text-slate-400 mt-1")
+    ui.label("Tipp: Vorher Backup erstellen!").classes("mt-hint mt-1")
