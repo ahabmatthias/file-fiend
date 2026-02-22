@@ -31,7 +31,7 @@ def get_metadata(file_path: str, file_type: str) -> dict:
     try:
         if file_type == "image":
             with Image.open(file_path) as image:
-                exif_data = image._getexif()
+                exif_data = image.getexif()
                 if not exif_data:
                     return {}
                 metadata: dict = {}
@@ -47,7 +47,7 @@ def get_metadata(file_path: str, file_type: str) -> dict:
                         except ValueError:
                             pass
                     elif tag in ("Make", "Model"):
-                        metadata[tag.lower()] = str(value)
+                        metadata[str(tag).lower()] = str(value)
                 return metadata
         elif file_type == "video":
             media_info = MediaInfo.parse(file_path)

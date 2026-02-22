@@ -28,7 +28,8 @@ async def pick_folder() -> str | None:
     import webview
     from nicegui import app as nicegui_app
 
-    result = await nicegui_app.native.main_window.create_file_dialog(
-        dialog_type=webview.FileDialog.FOLDER
-    )
+    window = nicegui_app.native.main_window
+    if window is None:
+        return None
+    result = await window.create_file_dialog(dialog_type=webview.FileDialog.FOLDER)
     return result[0] if result else None
