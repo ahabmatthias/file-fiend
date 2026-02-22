@@ -8,7 +8,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 from nicegui import ui
 
-from app.core.year_org import execute_organization, scan_folder
 from app.ui.utils import pick_folder
 
 _executor = ThreadPoolExecutor(max_workers=1)
@@ -61,6 +60,8 @@ def build(tab_panel):
             _state["folder"] = None
             btn_execute.disable()
 
+            from app.core.year_org import scan_folder  # noqa: PLC0415
+
             loop = asyncio.get_event_loop()
             result = await loop.run_in_executor(
                 _executor, lambda: scan_folder(folder, group_by_camera)
@@ -105,9 +106,9 @@ def build(tab_panel):
                         )
                         for year in sorted(result["files_by_year"].keys()):
                             files = result["files_by_year"][year]
-                            ui.label(
-                                f"📁  {year}/  →  {len(files)} Datei(en)"
-                            ).classes("font-mono text-sm")
+                            ui.label(f"📁  {year}/  →  {len(files)} Datei(en)").classes(
+                                "font-mono text-sm"
+                            )
 
                     if result["invalid_files"]:
                         ui.separator().classes("my-2")
@@ -129,9 +130,9 @@ def build(tab_panel):
                             f"⚠  {len(result['conflicts'])} Konflikte – Ausführen blockiert!"
                         ).classes("text-red-400 text-sm font-semibold")
                         for c in result["conflicts"][:5]:
-                            ui.label(
-                                f"  • {c['filename']} (Jahr {c['year']})"
-                            ).classes("font-mono text-xs text-red-300")
+                            ui.label(f"  • {c['filename']} (Jahr {c['year']})").classes(
+                                "font-mono text-xs text-red-300"
+                            )
 
             if not result["conflicts"]:
                 btn_execute.enable()
@@ -150,6 +151,8 @@ def build(tab_panel):
             status_label.set_text("Organisiere …")
             btn_execute.disable()
             preview_col.clear()
+
+            from app.core.year_org import execute_organization  # noqa: PLC0415
 
             group_by_camera = _state["scan"].get("group_by_camera", False)
             loop = asyncio.get_event_loop()
@@ -186,6 +189,4 @@ def build(tab_panel):
         )
         btn_execute.disable()
 
-        ui.label("Tipp: Vorher Backup erstellen!").classes(
-            "text-xs text-slate-400 mt-1"
-        )
+        ui.label("Tipp: Vorher Backup erstellen!").classes("text-xs text-slate-400 mt-1")

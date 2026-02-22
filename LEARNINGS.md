@@ -33,6 +33,44 @@ Chronologisches Lerntagebuch – für mich zum Nachschlagen, nicht als Projektdo
 
 ---
 
+## 2026-02 – Startup-Performance: Lazy Imports
+
+### Problem
+App startete in ~4 Sekunden. Ursache: Alle drei Tab-Module wurden beim Start vollständig
+importiert, obwohl der Nutzer zunächst nur das Fenster sehen will.
+
+Die Importkette beim Start:
+- `renamer_tab.py` → `app.core.renamer` → `unified_media_renamer` → **`pymediainfo`** (lädt
+  native C-Bibliothek `libmediainfo`) + `PIL`
+- `year_org_tab.py` → `app.core.year_org` → `PIL`, **`pillow_heif.register_heif_opener()`**
+  (Seiteneffekt auf Modul-Ebene!), `pymediainfo` (nochmal), `year_folder_script`
+
+`pymediainfo` war der größte Einzelbrocken – es lädt beim Import eine native shared library.
+
+### Fix: Lazy Imports in den Handler-Funktionen
+Core-Module erst beim ersten Klick auf „Vorschau" importieren, nicht beim App-Start:
+
+```python
+# vorher (Modul-Ebene):
+from app.core.renamer import collect_files, process_files
+
+# nachher (innerhalb von do_preview()):
+from app.core.renamer import collect_files, process_files  # noqa: PLC0415
+```
+
+Python cached Module – nach dem ersten Aufruf ist der Import instant.
+
+### Ergebnis
+Startzeit von ~4 Sekunden auf ~1 Sekunde reduziert. Die verbleibende Sekunde ist NiceGUI
+selbst (uvicorn + pywebview), kaum optimierbar ohne Framework-Wechsel.
+
+### Muster
+Überall wo schwere C-Extensions (pymediainfo, pillow-heif, PIL) nur für bestimmte
+Funktionen gebraucht werden: Import in die Funktion verschieben statt auf Modul-Ebene.
+`# noqa: PLC0415` unterdrückt die ruff-Warnung für Import-not-at-top-of-file.
+
+---
+
 ## 2026-02 – Kamera-Sortierung: Refactoring einer Querschnitts-Funktion
 
 ### Ausgangslage

@@ -9,7 +9,6 @@ from pathlib import Path
 
 from nicegui import ui
 
-from app.core.renamer import collect_files, process_files
 from app.ui.utils import pick_folder
 
 _executor = ThreadPoolExecutor(max_workers=1)
@@ -67,6 +66,8 @@ def build(tab_panel):
             _state["has_preview"] = False
             btn_rename.disable()
 
+            from app.core.renamer import collect_files, process_files  # noqa: PLC0415
+
             loop = asyncio.get_event_loop()
             files = await loop.run_in_executor(_executor, collect_files, folder)
 
@@ -95,30 +96,22 @@ def build(tab_panel):
                 btn_rename.enable()
                 with preview_col:
                     with ui.card().classes("w-full"):
-                        ui.label("Vorschau (alt → neu):").classes(
-                            "font-semibold text-sm mb-2"
-                        )
+                        ui.label("Vorschau (alt → neu):").classes("font-semibold text-sm mb-2")
                         for item in all_changes[:50]:
-                            old_short = _short_path(
-                                str(Path(folder) / item["old_name"]), folder
-                            )
-                            new_short = _short_path(
-                                str(Path(folder) / item["new_name"]), folder
-                            )
+                            old_short = _short_path(str(Path(folder) / item["old_name"]), folder)
+                            new_short = _short_path(str(Path(folder) / item["new_name"]), folder)
                             with ui.row().classes("w-full items-center gap-2"):
                                 ui.label(old_short).classes(
                                     "text-red-400 flex-1 truncate font-mono text-xs"
                                 )
-                                ui.icon("arrow_forward").classes(
-                                    "text-slate-400 text-xs"
-                                )
+                                ui.icon("arrow_forward").classes("text-slate-400 text-xs")
                                 ui.label(new_short).classes(
                                     "text-green-400 flex-1 truncate font-mono text-xs"
                                 )
                         if len(all_changes) > 50:
-                            ui.label(
-                                f"… und {len(all_changes) - 50} weitere"
-                            ).classes("text-xs text-slate-400 mt-1")
+                            ui.label(f"… und {len(all_changes) - 50} weitere").classes(
+                                "text-xs text-slate-400 mt-1"
+                            )
             else:
                 status_label.set_text("Alle Dateien bereits korrekt benannt. ✓")
 
@@ -135,6 +128,8 @@ def build(tab_panel):
             status_label.set_text("Benenne um …")
             btn_rename.disable()
             preview_col.clear()
+
+            from app.core.renamer import process_files  # noqa: PLC0415
 
             files = _state["files"]
             loop = asyncio.get_event_loop()
@@ -160,6 +155,4 @@ def build(tab_panel):
         )
         btn_rename.disable()
 
-        ui.label("Tipp: Vorher Backup erstellen!").classes(
-            "text-xs text-slate-400 mt-1"
-        )
+        ui.label("Tipp: Vorher Backup erstellen!").classes("text-xs text-slate-400 mt-1")
