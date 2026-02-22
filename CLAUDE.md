@@ -34,12 +34,12 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
 
 ### Phase 1b: UX-Verbesserungen
 
-- [ ] Gemeinsamer Ordner-Picker: globalen Ordner in Header/oberhalb der Tabs, Tabs lesen aus shared State (Video-Tab behält eigene Quell-/Zielordner)
-- [ ] Fortschrittsanzeige für Duplikat-Scan und Jahr-Organisation (nicht nur Spinner)
-- [ ] Kamera-Mapping konfigurierbar machen oder EXIF Make/Model direkt als Ordnername nutzen
-- [ ] Hinweis bei Kamera-Checkbox: EXIF-Daten nötig
-- [ ] Hinweis bei Video-Tab: Hardware-Codec ist macOS-only
-- [ ] Renamer: Option für nicht-rekursiven Scan
+- [x] Gemeinsamer Ordner-Picker: ein Picker über den Tabs, Tabs lesen aus shared State (Video-Tab behält eigene Quell-/Zielordner)
+- [x] Fortschrittsanzeige für Duplikat-Scan und Jahr-Organisation (`ui.linear_progress` mit progress_cb)
+- [x] Kamera-Mapping: EXIF Make/Model direkt als Ordnername nutzen (keine hardcodierten Mappings)
+- [x] Hinweis bei Kamera-Checkbox: EXIF-Daten nötig
+- [x] Hinweis bei Video-Tab: Hardware-Codec ist macOS-only
+- [x] Renamer: Option für nicht-rekursiven Scan (Checkbox „Mit Unterordnern")
 
 ### Phase 2: Packaging
 
