@@ -12,7 +12,6 @@ import contextlib
 import io
 import re
 import shutil
-import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -20,17 +19,13 @@ from PIL import Image
 
 try:
     import pillow_heif
+
     pillow_heif.register_heif_opener()
 except ImportError:
     pass  # HEIC-Support optional – ohne Plugin werden HEIC-Dateien übersprungen
 
-# Projekt-Root zum Importpfad hinzufügen
-_ROOT = Path(__file__).parents[2]
-if str(_ROOT) not in sys.path:
-    sys.path.insert(0, str(_ROOT))
-
-from unified_media_renamer import get_metadata  # noqa: E402
-from year_folder_script import (  # noqa: E402
+from unified_media_renamer import get_metadata
+from year_folder_script import (
     create_year_folders,
     extract_year_from_filename,
     find_empty_folders,
@@ -38,20 +33,32 @@ from year_folder_script import (  # noqa: E402
     move_files_to_year_folders,
 )
 
-_IMAGE_EXTS = {'.jpg', '.jpeg', '.png', '.heic'}
+_IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".heic"}
 _EXIF_DATETIME_TAGS = (36867, 36868, 306)  # DateTimeOriginal, DateTimeDigitized, DateTime
 _CAMERA_MAPPINGS = {
-    'GH5': 'Lumix',
-    'GX80': 'Lumix',
-    'DJI': 'Osmo',
+    "GH5": "Lumix",
+    "GX80": "Lumix",
+    "DJI": "Osmo",
 }
 # Matcht XMP-Datumsattribute wie MetadataDate="2024-..." oder DateTimeOriginal>2024...
 _XMP_DATE_RE = re.compile(
     r'(?:DateTimeOriginal|CreateDate|DateCreated|MetadataDate)[="\s>:]+(\d{4})'
 )
 _SUPPORTED_EXTS = {
-    '.jpg', '.jpeg', '.png', '.tiff', '.bmp', '.heic',
-    '.mp4', '.mov', '.avi', '.mkv', '.aac', '.wav', '.mp3', '.m4a',
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".tiff",
+    ".bmp",
+    ".heic",
+    ".mp4",
+    ".mov",
+    ".avi",
+    ".mkv",
+    ".aac",
+    ".wav",
+    ".mp3",
+    ".m4a",
 }
 
 
@@ -72,9 +79,13 @@ def _read_exif_year(file_path: Path) -> int | None:
                         if 1990 <= year <= 2030:
                             return year
             # XMP-Fallback (z.B. Photoshop-bearbeitete Sony-Dateien ohne DateTimeOriginal)
-            xmp_raw = img.info.get('xmp')
+            xmp_raw = img.info.get("xmp")
             if xmp_raw:
-                xmp = xmp_raw.decode('utf-8', errors='ignore') if isinstance(xmp_raw, bytes) else xmp_raw
+                xmp = (
+                    xmp_raw.decode("utf-8", errors="ignore")
+                    if isinstance(xmp_raw, bytes)
+                    else xmp_raw
+                )
                 m = _XMP_DATE_RE.search(xmp)
                 if m:
                     year = int(m.group(1))
@@ -90,7 +101,7 @@ def _remove_empty_folders(empty_folders: list) -> list:
     removed = []
     for folder in empty_folders:
         for f in folder.iterdir():
-            if f.name == '.DS_Store' or f.name.startswith('._'):
+            if f.name == ".DS_Store" or f.name.startswith("._"):
                 f.unlink()
         try:
             folder.rmdir()
@@ -112,35 +123,35 @@ def _detect_camera(file_path: Path) -> str:
     Erkennt die Kamera aus EXIF-Daten oder Dateinamen.
     Reihenfolge: EXIF model → EXIF make → Dateiname-Präfix → 'Sonstige'.
     """
-    file_type = 'image' if file_path.suffix.lower() in _IMAGE_EXTS else 'video'
+    file_type = "image" if file_path.suffix.lower() in _IMAGE_EXTS else "video"
     try:
         meta = _run_silent(get_metadata, str(file_path), file_type)
     except Exception:
         meta = {}
 
     # 1. EXIF model
-    model = meta.get('model', '')
+    model = meta.get("model", "")
     if model:
-        if 'DC-GH5' in model or 'GH5' in model:
-            return _CAMERA_MAPPINGS['GH5']
-        if 'DMC-GX80' in model or 'GX80' in model:
-            return _CAMERA_MAPPINGS['GX80']
-        if 'PP-101' in model or 'DJI' in model:
-            return _CAMERA_MAPPINGS['DJI']
+        if "DC-GH5" in model or "GH5" in model:
+            return _CAMERA_MAPPINGS["GH5"]
+        if "DMC-GX80" in model or "GX80" in model:
+            return _CAMERA_MAPPINGS["GX80"]
+        if "PP-101" in model or "DJI" in model:
+            return _CAMERA_MAPPINGS["DJI"]
 
     # 2. EXIF make
-    make = meta.get('make', '')
+    make = meta.get("make", "")
     if make:
-        if 'DJI' in make:
-            return _CAMERA_MAPPINGS['DJI']
-        if 'Panasonic' in make:
-            return _CAMERA_MAPPINGS['GX80']
+        if "DJI" in make:
+            return _CAMERA_MAPPINGS["DJI"]
+        if "Panasonic" in make:
+            return _CAMERA_MAPPINGS["GX80"]
 
     # 3. Dateiname-Präfix
-    if file_path.name.upper().startswith('DJI_'):
-        return _CAMERA_MAPPINGS['DJI']
+    if file_path.name.upper().startswith("DJI_"):
+        return _CAMERA_MAPPINGS["DJI"]
 
-    return 'Sonstige'
+    return "Sonstige"
 
 
 def _extract_year(file_path: Path) -> int | None:
@@ -151,7 +162,7 @@ def _extract_year(file_path: Path) -> int | None:
     """
     year = extract_year_from_filename(file_path.name)
     if year:
-        return year
+        return int(year)
 
     if file_path.suffix.lower() in _IMAGE_EXTS:
         return _read_exif_year(file_path)
@@ -163,7 +174,7 @@ def _extract_year(file_path: Path) -> int | None:
         if dt:
             y = dt.year
             if 1990 <= y <= 2030:
-                return y
+                return int(y)
     except Exception:
         pass
 
@@ -184,15 +195,15 @@ def _collect_files_with_years(folder_path: str, group_by_camera: bool = False):
         files_by_year = defaultdict(list)
     invalid_files = []
 
-    for file_path in folder.rglob('*'):
+    for file_path in folder.rglob("*"):
         if not file_path.is_file():
             continue
         if (
-            file_path.name.startswith('._')
-            or file_path.name == '.DS_Store'
-            or file_path.name.startswith('rename_log_')
-            or file_path.name.startswith('camera_rename_log_')
-            or file_path.parent.name == 'duplicates'
+            file_path.name.startswith("._")
+            or file_path.name == ".DS_Store"
+            or file_path.name.startswith("rename_log_")
+            or file_path.name.startswith("camera_rename_log_")
+            or file_path.parent.name == "duplicates"
         ):
             continue
         if file_path.suffix.lower() not in _SUPPORTED_EXTS:
@@ -200,10 +211,12 @@ def _collect_files_with_years(folder_path: str, group_by_camera: bool = False):
 
         year = _extract_year(file_path)
         if year is None:
-            invalid_files.append({
-                'path': file_path,
-                'reason': 'Jahr nicht erkennbar (Dateiname + Metadata geprüft)',
-            })
+            invalid_files.append(
+                {
+                    "path": file_path,
+                    "reason": "Jahr nicht erkennbar (Dateiname + Metadata geprüft)",
+                }
+            )
         elif group_by_camera:
             camera = _detect_camera(file_path)
             files_by_year[year][camera].append(file_path)
@@ -254,9 +267,7 @@ def scan_folder(folder_path: str, group_by_camera: bool = False) -> dict:
 
     if group_by_camera:
         total = sum(
-            len(paths)
-            for cam_dict in files_by_year.values()
-            for paths in cam_dict.values()
+            len(paths) for cam_dict in files_by_year.values() for paths in cam_dict.values()
         )
     else:
         total = sum(len(f) for f in files_by_year.values())
@@ -286,18 +297,20 @@ def _move_with_camera_groups(files_by_year: dict, folder: Path):
             for file_path in paths:
                 target_path = target_dir / file_path.name
                 if target_path.exists() and target_path != file_path:
-                    errors.append({
-                        'file': file_path,
-                        'target': target_path,
-                        'error': 'Zieldatei existiert bereits',
-                    })
+                    errors.append(
+                        {
+                            "file": file_path,
+                            "target": target_path,
+                            "error": "Zieldatei existiert bereits",
+                        }
+                    )
                     continue
                 try:
                     if file_path.parent != target_dir:
                         shutil.move(str(file_path), str(target_path))
-                    moved_files.append({'source': file_path, 'target': target_path})
+                    moved_files.append({"source": file_path, "target": target_path})
                 except Exception as e:
-                    errors.append({'file': file_path, 'target': target_path, 'error': str(e)})
+                    errors.append({"file": file_path, "target": target_path, "error": str(e)})
 
     return moved_files, errors
 
@@ -322,8 +335,13 @@ def execute_organization(folder_path: str, group_by_camera: bool = False) -> dic
     files_by_year, invalid_files = _collect_files_with_years(folder_path, group_by_camera)
 
     if not files_by_year:
-        return {"error": "Keine Dateien mit erkennbarem Jahr gefunden.", "moved": 0,
-                "errors": 0, "removed_folders": 0, "error_details": []}
+        return {
+            "error": "Keine Dateien mit erkennbarem Jahr gefunden.",
+            "moved": 0,
+            "errors": 0,
+            "removed_folders": 0,
+            "error_details": [],
+        }
 
     # Konflikt-Prüfung mit flacher Struktur
     if group_by_camera:
@@ -339,7 +357,10 @@ def execute_organization(folder_path: str, group_by_camera: bool = False) -> dic
         return {
             "error": f"{len(conflicts)} Dateiname-Konflikte – Organisation abgebrochen.",
             "conflicts": conflicts,
-            "moved": 0, "errors": 0, "removed_folders": 0, "error_details": [],
+            "moved": 0,
+            "errors": 0,
+            "removed_folders": 0,
+            "error_details": [],
         }
 
     if group_by_camera:
