@@ -106,6 +106,67 @@ Funktionen gebraucht werden: Import in die Funktion verschieben statt auf Modul-
 
 ---
 
+## 2026-02 – Phase 1b: UX-Verbesserungen & Shared State
+
+### Shared State zwischen Tabs: Dict-Referenz statt Binding
+
+Für einen gemeinsamen Ordner-Picker über den Tabs war der einfachste Ansatz ein
+schlichtes Dict, das an die `build()`-Funktionen übergeben wird:
+
+```python
+shared = {"folder": ""}
+```
+
+Tabs lesen `shared["folder"]` beim Button-Klick aus – kein Reaktivitäts-Framework nötig,
+weil der Wert immer zum Zeitpunkt des Klicks gelesen wird, nicht beim Build.
+
+**NiceGUI-Parameter-Name:** `ui.input()` verwendet `on_change=`, nicht `on_value_change=`
+(das existiert nicht und wirft einen `TypeError` erst zur Laufzeit).
+
+### Zwei Picker vs. einer: Konsequent entscheiden
+
+Erster Entwurf: globaler Picker oben + lokaler Picker in jedem Tab. Das ist redundant
+und verwirrend – der Nutzer fragt sich, welcher gerade gilt.
+
+Bessere Lösung: **lokale Picker komplett entfernen**. Einziger Picker oben, Tabs lesen
+aus `shared`. Tabs verlieren keine Funktionalität – sie brauchen keinen eigenen Picker,
+weil der globale alle Fälle abdeckt.
+
+Ausnahme: Video-Tab mit getrenntem Quell- und Zielordner hat genuinen Bedarf für eigene
+Picker – der bleibt unverändert.
+
+### Pre-commit vs. `make lint`: Unterschiedliche mypy-Sichtbarkeit
+
+Pre-commit läuft mypy nur auf **veränderten Dateien** – `make lint` prüft das ganze `app/`-
+Verzeichnis. Fehler in Dateien, die man nicht angefasst hat, sieht der Hook nicht.
+
+Konsequenz: `make lint` nach jeder Session als Pflicht, nicht nur verlassen auf den Hook.
+
+### Mypy-Fehler: suppressen vs. fixen
+
+Ersten Instinkt (Fehler mit `type: ignore` oder `[[tool.mypy.overrides]]` stumm schalten)
+hinterfragen. In diesem Fall waren echte Fixes möglich und besser:
+
+- `image._getexif()` → `image.getexif()` (öffentliche Pillow-API seit 6.0). Nebeneffekt:
+  mypy sieht jetzt den Typ von `tag` als `str | int` statt `Any` → weiterer echter Fix nötig:
+  `str(tag).lower()` statt `tag.lower()`
+- `nicegui_app.native.main_window` kann laut Typing `None` sein → echten `None`-Guard
+  einbauen statt das Typing zu ignorieren. Macht die Funktion auch robuster (Browser-Modus).
+
+**Daumenregel:** `type: ignore` ist akzeptabel wenn das Typing schlicht falsch/unvollständig
+ist und kein Fix existiert. Wenn ein echter Fix existiert, ist der immer vorzuziehen.
+
+### Progress-Callbacks: Zwei-Stufen-Problem bei Duplikaten
+
+`find_duplicates()` läuft in zwei Phasen: erst alle Dateien nach Größe gruppieren (sehr
+schnell), dann nur die Kandidaten hashen (langsam). Die Kandidaten-Anzahl für die
+Fortschrittsanzeige ist erst nach Phase 1 bekannt.
+
+Lösung: `candidates_total` nach Phase 1 berechnen, dann in Phase 2 den Callback aufrufen.
+Der Fortschrittsbalken zeigt nur den langsamen Teil – das ist genau was der Nutzer sehen will.
+
+---
+
 ## 2026-02 – Kamera-Sortierung: Refactoring einer Querschnitts-Funktion
 
 ### Ausgangslage
