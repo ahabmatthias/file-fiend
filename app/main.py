@@ -6,7 +6,7 @@ Starten mit: python -m app.main
 
 from nicegui import ui
 
-from app.ui import duplicates_tab, renamer_tab, year_org_tab
+from app.ui import duplicates_tab, renamer_tab, video_compress_tab, year_org_tab
 
 
 def main():
@@ -18,6 +18,7 @@ def main():
             tab_dupes = ui.tab("Duplikate", icon="content_copy")
             tab_renamer = ui.tab("Umbenennen", icon="drive_file_rename_outline")
             tab_year = ui.tab("Jahr-Ordner", icon="calendar_month")
+            tab_video = ui.tab("Video", icon="movie")
 
         with ui.tab_panels(tabs, value=tab_dupes).classes("w-full mt-4"):
             panel_dupes = ui.tab_panel(tab_dupes)
@@ -28,6 +29,9 @@ def main():
 
             panel_year = ui.tab_panel(tab_year)
             year_org_tab.build(panel_year)
+
+            panel_video = ui.tab_panel(tab_video)
+            video_compress_tab.build(panel_video)
 
     ui.run(
         title="Media Tools",
