@@ -15,15 +15,15 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
   - Duplikate per Hash (MD5/SHA1) erkennen
   - Ergebnis in der UI anzeigen (Thumbnails + Liste)
   - Duplikate auswählen und löschen können
-- [x] Schritt 3: `unified_media_renamer.py` als Tab integrieren
+- [x] Schritt 3: Renamer-Tab (`app/core/renamer.py`)
   - Ordner auswählen
   - Vorschau der Umbenennungen (dry-run)
   - Umbenennen ausführen
-- [ ] Schritt 4: `video_compress.py` als Tab integrieren
+- [x] Schritt 4: Video-Compress-Tab (`app/core/video_compress.py`)
   - Ordner oder Einzeldatei auswählen
   - Komprimierungsoptionen (Qualität, Format)
   - Fortschrittsanzeige
-- [x] Schritt 5: `year_folder_script.py` als Tab integrieren
+- [x] Schritt 5: Jahr-Ordner-Tab (`app/core/year_org.py`)
   - Ordner auswählen
   - Vorschau der Ordnerstruktur
   - Sortierung ausführen
@@ -35,12 +35,9 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
 ### Phase 2: Packaging
 
 - [ ] Schritt 6: Als macOS `.app` verpacken
-  - Tool evaluieren: `py2app` oder `PyInstaller`
+  - Tool: PyInstaller (py2app hat häufiger Probleme mit modernen Python-Versionen)
   - Build-Script erstellen
   - Testen ob natives Fenster funktioniert
-  > Hinweis: Beim Packaging Alt-Format-Regex-Zweig (`HH-MM-SS`) aus
-  > `unified_media_renamer.py` entfernen – nur für eigene Abwärtskompatibilität
-  > eingebaut, externe Nutzer haben keine Dateien im alten Format.
 
 ---
 
@@ -49,7 +46,7 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
 - Python 3.10+ (3.13 empfohlen – venv nutzt 3.13)
 - [NiceGUI](https://nicegui.io) – UI-Framework (Web-basiert, native Window via pywebview)
 - pywebview – für natives macOS-Fenster
-- bestehende Scripts in `app/core/` einbinden
+- gesamte Logik in `app/core/`, UI-Tabs in `app/ui/`
 
 ## Starten
 
