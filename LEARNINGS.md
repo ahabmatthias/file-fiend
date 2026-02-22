@@ -115,6 +115,46 @@ ist noch nicht getestet, weil dafür echte Testbilder mit Metadaten nötig wäre
 
 ---
 
+## 2026-02 – Video-Compress-Tab: Integration & UX-Iterationen
+
+### Wrapper-Pattern: Direkter Import statt Copy-Paste
+`app/core/video_compress.py` importiert direkt aus dem Root-Script `video_compress.py` –
+keine Code-Duplizierung. Der Wrapper ergänzt nur das, was für die UI fehlt: strukturierte
+Rückgabewerte, `progress_cb`-Parameter, Unterdrückung von print-Output.
+
+Wo die Root-Logik zu monolithisch war (die Haupt-Loop in `compress_videos()` gibt nichts
+zurück), wurde sie in `compress_files()` neu implementiert – aber mit denselben Hilfsfunktionen
+(`collect_files`, `ffprobe_json`, `pick_target_bitrate`, `should_skip_copy`, `build_ffmpeg_cmd`).
+
+### Pre-commit: ruff SIM108
+ruff hat einen if/else-Block durch einen Ternary-Ausdruck ersetzt (SIM108). Kann direkt beim
+Schreiben vermieden werden – bei `codec == "auto"` war die Ternary-Form tatsächlich lesbarer:
+```python
+use_vt = detect_videotoolbox() if codec == "auto" else codec == "hevc_videotoolbox"
+```
+
+### UX: Labels sind wichtiger als technische Bezeichnungen
+Erste Version der Codec-Auswahl nutzte technische Namen: `"Auto (empfohlen)"`,
+`"VideoToolbox (HW)"`, `"libx265 (SW)"`. Das sagt Nutzern ohne Encoding-Hintergrund nichts.
+
+Überarbeitete Labels:
+- `"Automatisch"` – beschreibt das Verhalten, nicht den Mechanismus
+- `"Hardware (schnell)"` – der relevante Unterschied ist Geschwindigkeit
+- `"Software (langsam)"` – ehrlich, keine Verschleierung
+
+Gleiches Muster bei der Checkbox: `"Rekursiv"` → `"Unterordner einbeziehen"`. Fachbegriff
+gegen direkte Beschreibung der Konsequenz austauschen.
+
+**Merksatz für Labels:** Was passiert, wenn ich das aktiviere? Die Antwort ist der Label.
+
+### UX-Block als bewusste Entscheidung
+Design und Labels werden immer wieder angefasst – das ist kein Fehler, sondern sinnvoll.
+Einzelne Korrekturen direkt mitzudenken spart später aufwändigere Refactorings. Ein
+dedizierter UX-Review-Block (alle Tabs auf einmal) ist trotzdem geplant, um konsistente
+Sprache und Verhalten über die gesamte App sicherzustellen.
+
+---
+
 ## 2026-01 – NiceGUI & UI-Integration
 
 ### tqdm/print in Legacy-Scripts
