@@ -19,11 +19,11 @@ _ACTION_LABEL = {
 }
 
 
-def build(tab_panel, shared=None):
-    """Baut den Video-Komprimierungs-Tab in das übergebene tab_panel."""
-    with tab_panel:
-        # ── Ordner-Auswahl ─────────────────────────────────────────────
-        with ui.row().classes("w-full items-center gap-2 mt-1"):
+def build(shared: dict):
+    """Baut den Video-Komprimierungs-Tab – wird innerhalb eines tab_panel aufgerufen."""
+    # ── Card: Optionen ─────────────────────────────────────────────
+    with ui.card().classes("w-full").props("flat bordered"):
+        with ui.row().classes("w-full items-center gap-2"):
             target_input = ui.input(
                 label="Zielordner",
                 placeholder="/Users/du/Videos_compressed",
@@ -36,7 +36,6 @@ def build(tab_panel, shared=None):
 
             ui.button("Ordner wählen", on_click=on_pick_target, icon="folder_open")
 
-        # ── Optionen ───────────────────────────────────────────────────
         with ui.row().classes("items-center gap-4 mt-2"):
             codec_select = ui.select(
                 label="Codec",
@@ -58,16 +57,17 @@ def build(tab_panel, shared=None):
             "Software encodiert in reinem Code – langsamer, minimal präziser."
         ).classes("text-xs text-slate-400 mt-1")
 
-        # ── Status + Spinner ───────────────────────────────────────────
-        with ui.row().classes("items-center gap-3 mt-2"):
-            spinner = ui.spinner(size="sm").classes("text-slate-400")
+    # ── Card: Vorschau ─────────────────────────────────────────────
+    with ui.card().classes("w-full mt-4").props("flat bordered"):
+        _state: dict = {"preview": None, "source": None, "target": None, "config": None}
+
+        with ui.row().classes("items-center gap-3"):
+            spinner = ui.spinner(size="sm").classes("text-primary")
             spinner.visible = False
             status_label = ui.label("").classes("text-slate-500 text-sm")
 
         preview_col = ui.column().classes("w-full gap-2 mt-2")
-        _state: dict = {"preview": None, "source": None, "target": None, "config": None}
 
-        # ── Vorschau ───────────────────────────────────────────────────
         async def do_preview():
             source = shared["folder"].strip() if shared else ""
             target = target_input.value.strip()
@@ -147,20 +147,19 @@ def build(tab_panel, shared=None):
             ]
 
             with preview_col:
-                with ui.card().classes("w-full"):
-                    ui.table(columns=columns, rows=rows).classes("w-full text-sm")
-                    if len(result) > MAX_SHOWN:
-                        ui.label(f"… und {len(result) - MAX_SHOWN} weitere").classes(
-                            "text-xs text-slate-400 mt-1"
-                        )
+                ui.table(columns=columns, rows=rows).classes("w-full text-sm")
+                if len(result) > MAX_SHOWN:
+                    ui.label(f"… und {len(result) - MAX_SHOWN} weitere").classes(
+                        "text-xs text-slate-400 mt-1"
+                    )
 
             btn_execute.enable()
 
-        ui.button("Vorschau", on_click=do_preview, icon="preview").classes("mt-2")
+        ui.button("Vorschau", on_click=do_preview, icon="preview").props("color=primary")
 
-        ui.separator().classes("mt-4")
+    # ── Card: Ausführen ────────────────────────────────────────────
+    with ui.card().classes("w-full mt-4").props("flat bordered"):
 
-        # ── Komprimieren ───────────────────────────────────────────────
         async def do_execute():
             if not _state.get("preview") or not _state.get("source"):
                 return
