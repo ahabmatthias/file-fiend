@@ -46,7 +46,7 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
 
 ## Stack
 
-- Python 3.9+
+- Python 3.10+ (3.13 empfohlen – venv nutzt 3.13)
 - [NiceGUI](https://nicegui.io) – UI-Framework (Web-basiert, native Window via pywebview)
 - pywebview – für natives macOS-Fenster
 - bestehende Scripts in `app/core/` einbinden
