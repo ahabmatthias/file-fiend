@@ -33,6 +33,50 @@ Chronologisches Lerntagebuch – für mich zum Nachschlagen, nicht als Projektdo
 
 ---
 
+## 2026-02 – Kamera-Sortierung: Refactoring einer Querschnitts-Funktion
+
+### Ausgangslage
+Der Renamer schrieb den Kameranamen (`Lumix`, `Osmo`) als Token in den Dateinamen:
+`2024-03-15_143022_Lumix_P1020123.jpg`. Das war gedacht, um Aufnahmen verschiedener Kameras
+unterscheidbar zu machen. In der Praxis war das unübersichtlich und vermischte zwei Aufgaben:
+_Datum_ und _Herkunft_ in einem einzigen Dateinamen-Schema.
+
+### Entscheidung: Kamera als Ordner, nicht als Namensteil
+Statt `year/datei` (mit Kamera im Namen) wird jetzt `year/camera/datei` als optionale Struktur
+im Jahr-Ordner-Tool angeboten. Der Dateiname selbst ist sauber: `YYYY-MM-DD_HHMMSS_<stem>.<ext>`.
+
+**Warum Ordner besser ist als Name:**
+- Ordner ist filterbar im Finder ohne Suche
+- Dateiname bleibt kürzer und maschinenlesbarer
+- Kamera-Information liegt im EXIF – die braucht nicht im Namen redundant zu stehen
+- Schema funktioniert auch für Kameras, die keinen Kamera-Token bekommen hätten
+
+### Rückwärtskompatibilität bewusst weggelassen
+Bereits umbenannte Dateien mit `_Lumix_` im Namen werden vom Renamer jetzt übersprungen statt
+„korrigiert". Der Korrektur-Zweig war nur für eigene Altdateien nötig – externe Nutzer haben
+keine Dateien im alten Format. Das vereinfacht `generate_filename()` und `process_files()`
+erheblich.
+
+### Wo `detect_camera()` jetzt lebt
+Die Funktion existierte in `unified_media_renamer.py` und wurde in `app/core/year_org.py` neu
+implementiert (als `_detect_camera()`). Bewusst _nicht_ importiert: Die Erkennungslogik für
+den Renamer (der Dateinamen-Fallback für bereits umbenannte Dateien) ist anders als die für
+die Jahr-Sortierung (EXIF-first, Dateiname nur als letzter Fallback). Getrennte Implementierung
+ist hier klarer als ein gemeinsamer Import.
+
+### Architektur-Muster: group_by_camera als Parameter
+`scan_folder()` und `execute_organization()` bekamen einen `group_by_camera: bool = False`-
+Parameter. Defaultwert `False` hält den normalen Workflow unverändert. Die UI-Checkbox setzt
+diesen Wert und speichert ihn im Scan-Ergebnis (`_state["scan"]["group_by_camera"]`), damit
+`do_execute()` exakt dieselbe Option nutzt wie die vorangegangene Vorschau.
+
+### Tests haben den Merge abgesichert
+28 Tests liefen nach dem Merge grün durch – darunter Tests für `scan_folder` und
+`execute_organization`, die die Kernlogik abdecken. Die Kamera-Erkennung selbst (EXIF-Parsing)
+ist noch nicht getestet, weil dafür echte Testbilder mit Metadaten nötig wären.
+
+---
+
 ## 2026-01 – NiceGUI & UI-Integration
 
 ### tqdm/print in Legacy-Scripts
