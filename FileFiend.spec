@@ -7,6 +7,8 @@ Build mit: python build_app.py
 import importlib.util
 from pathlib import Path
 
+from PyInstaller.utils.hooks import collect_all
+
 block_cipher = None
 
 # ── Pfade ermitteln ──────────────────────────────────────────
@@ -15,13 +17,19 @@ ROOT = Path(SPECPATH)
 nicegui_path = Path(importlib.util.find_spec("nicegui").submodule_search_locations[0])
 pymediainfo_path = Path(importlib.util.find_spec("pymediainfo").submodule_search_locations[0])
 
+# ── collect_all für Packages mit dynamischen Imports ─────────
+_socketio_d, _socketio_b, _socketio_h = collect_all("socketio")
+_engineio_d, _engineio_b, _engineio_h = collect_all("engineio")
+
 # ── Daten & Binaries ────────────────────────────────────────
 datas = [
     (str(nicegui_path), "nicegui"),
     (str(pymediainfo_path), "pymediainfo"),
+    *_socketio_d,
+    *_engineio_d,
 ]
 
-binaries = []
+binaries = [*_socketio_b, *_engineio_b]
 vendor_dir = ROOT / "vendor"
 if (vendor_dir / "ffmpeg").exists():
     binaries.append((str(vendor_dir / "ffmpeg"), "vendor"))
@@ -82,7 +90,7 @@ a = Analysis(
     pathex=[str(ROOT)],
     binaries=binaries,
     datas=datas,
-    hiddenimports=hiddenimports,
+    hiddenimports=hiddenimports + _socketio_h + _engineio_h,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

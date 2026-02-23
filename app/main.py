@@ -21,8 +21,8 @@ from app.ui import (  # noqa: E402
 from app.ui.utils import pick_folder  # noqa: E402
 
 
-def main():
-    setup_path()
+@ui.page("/")
+def index():
     theme.apply()
 
     with ui.header().classes("bg-[#161b27] border-b border-[#2a3147] px-5 py-2"):
@@ -64,6 +64,10 @@ def main():
             year_org_tab.build(shared)
         with ui.tab_panel(tab_video):
             video_compress_tab.build(shared)
+
+
+def main():
+    setup_path()
 
     from nicegui.native import find_open_port  # noqa: PLC0415
 
