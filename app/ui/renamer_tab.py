@@ -179,6 +179,7 @@ def build(shared: dict):
         )
         .classes("mt-btn-success")
         .props("no-caps")
+        .style("background-color: #34d399 !important; color: #0f1117 !important")
     )
     btn_rename.disable()
 

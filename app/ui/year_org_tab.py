@@ -234,6 +234,7 @@ def build(shared: dict):
         ui.button("Ausführen", on_click=do_execute, icon="folder_special")
         .classes("mt-btn-success")
         .props("no-caps")
+        .style("background-color: #34d399 !important; color: #0f1117 !important")
     )
     btn_execute.disable()
 

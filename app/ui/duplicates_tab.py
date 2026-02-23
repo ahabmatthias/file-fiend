@@ -188,5 +188,7 @@ def build(shared: dict):
         "Ausgewählte löschen",
         on_click=do_delete,
         icon="delete",
-    ).classes("mt-btn-danger").props("no-caps")
+    ).classes("mt-btn-success").props("no-caps").style(
+        "background-color: #34d399 !important; color: #0f1117 !important"
+    )
     ui.label("Tipp: Vorher Backup erstellen!").classes("mt-hint mt-1")

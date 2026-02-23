@@ -62,10 +62,11 @@ body, .q-page, .nicegui-content {
 .q-field__label { color: #64748b !important; }
 
 /* ── Buttons ───────────────────────────────────────────────── */
-/* Primary */
-.mt-btn-primary {
-    background: #4f8ef7 !important;
-    color: #fff !important;
+/* Shared base – overrides Quasar inline styles */
+.q-btn.mt-btn-primary,
+.q-btn.mt-btn-success,
+.q-btn.mt-btn-danger,
+.q-btn.mt-btn-ghost {
     border-radius: 6px !important;
     font-size: 12px !important;
     font-weight: 500 !important;
@@ -73,46 +74,26 @@ body, .q-page, .nicegui-content {
     height: 32px !important;
     box-shadow: none !important;
 }
-.mt-btn-primary:hover { filter: brightness(1.15); }
+
+/* Primary */
+.q-btn.mt-btn-primary { background: #4f8ef7 !important; color: #fff !important; }
+.q-btn.mt-btn-primary:hover { filter: brightness(1.15); }
 
 /* Success */
-.mt-btn-success {
-    background: #34d399 !important;
-    color: #0f1117 !important;
-    border-radius: 6px !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    padding: 0 14px !important;
-    height: 32px !important;
-    box-shadow: none !important;
-}
-.mt-btn-success:hover { filter: brightness(1.1); }
+.q-btn.mt-btn-success { background: #34d399 !important; color: #0f1117 !important; }
+.q-btn.mt-btn-success:hover { filter: brightness(1.1); }
 
 /* Danger */
-.mt-btn-danger {
-    background: #f87171 !important;
-    color: #fff !important;
-    border-radius: 6px !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    padding: 0 14px !important;
-    height: 32px !important;
-    box-shadow: none !important;
-}
+.q-btn.mt-btn-danger { background: #f87171 !important; color: #fff !important; }
+.q-btn.mt-btn-danger:hover { filter: brightness(1.1); }
 
 /* Ghost */
-.mt-btn-ghost {
+.q-btn.mt-btn-ghost {
     background: #1e2535 !important;
     color: #e2e8f0 !important;
     border: 1px solid #2a3147 !important;
-    border-radius: 6px !important;
-    font-size: 12px !important;
-    font-weight: 500 !important;
-    padding: 0 14px !important;
-    height: 32px !important;
-    box-shadow: none !important;
 }
-.mt-btn-ghost:hover { border-color: #4f8ef7 !important; }
+.q-btn.mt-btn-ghost:hover { border-color: #4f8ef7 !important; }
 
 /* Disabled state */
 .q-btn.disabled, .q-btn[disabled] { opacity: 0.35 !important; }
