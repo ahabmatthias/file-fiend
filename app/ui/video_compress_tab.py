@@ -17,6 +17,7 @@ _executor = ThreadPoolExecutor(max_workers=1)
 _ACTION_TAG = {
     "compress": ("mt-tag mt-tag-compress", "Komprimieren"),
     "skip": ("mt-tag mt-tag-skip", "Überspringen"),
+    "skip_exists": ("mt-tag mt-tag-skip", "Ziel existiert"),
     "skip_and_copy": ("mt-tag mt-tag-copy", "Kopieren"),
 }
 
@@ -86,7 +87,7 @@ def build(shared: dict):
     preview_col = ui.column().classes("w-full gap-0 mt-2")
     _state: dict = {"preview": None, "source": None, "target": None, "config": None}
 
-    def _show_preview_pills(n_compress: int, n_skip: int, n_copy: int):
+    def _show_preview_pills(n_compress: int, n_skip: int, n_copy: int, n_exists: int = 0):
         pills_row.clear()
         pills_row.visible = True
         with pills_row:
@@ -96,6 +97,8 @@ def build(shared: dict):
                 theme.pill(f"{n_copy} kopieren", "neutral")
             if n_skip:
                 theme.pill(f"{n_skip} überspringen", "")
+            if n_exists:
+                theme.pill(f"{n_exists} Ziel existiert", "")
 
     # ── Vorschau ──────────────────────────────────────────────────
     async def do_preview():
@@ -148,10 +151,11 @@ def build(shared: dict):
 
         n_compress = sum(1 for f in result if f["action"] == "compress")
         n_skip = sum(1 for f in result if f["action"] == "skip")
+        n_exists = sum(1 for f in result if f["action"] == "skip_exists")
         n_copy = sum(1 for f in result if f["action"] == "skip_and_copy")
 
         status_label.set_text(f"{len(result)} Dateien gefunden")
-        _show_preview_pills(n_compress, n_skip, n_copy)
+        _show_preview_pills(n_compress, n_skip, n_copy, n_exists)
 
         # ── HTML-Tabelle ──────────────────────────────────────
         MAX_SHOWN = 50

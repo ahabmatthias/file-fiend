@@ -244,7 +244,7 @@ def preview_compression(
                     "resolution": "–",
                     "current_bitrate_mbps": None,
                     "target_bitrate": "–",
-                    "action": "skip",
+                    "action": "skip_exists",
                 }
             )
             continue
