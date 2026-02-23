@@ -365,6 +365,38 @@ umpriorisiert: Metadaten zuerst (zuverlässiger), Dateiname nur als Fallback.
 
 ---
 
+## 2026-02 – Video-Vorschau: Skip-Gründe transparent machen
+
+### Problem
+Zwei 170+ MB Videodateien wurden in der Vorschau als „Überspringen" angezeigt, obwohl die
+Min-Größe auf 30 MB stand. Kein offensichtlicher Fehler – Resolution und Bitrate zeigten „–".
+
+### Ursache
+Im Zielordner lagen bereits komprimierte Dateien vom vorherigen Durchlauf. Die Quelldateien
+hießen `*.MP4` (Großbuchstaben), die Zieldateien `*.mp4` (klein). macOS APFS ist
+**case-insensitive** (Default) – `Path.exists()` matcht `DJI_foo.mp4` auch wenn `DJI_foo.MP4`
+auf der Platte liegt. Der Code hat korrekt übersprungen, aber die Aktion war identisch mit
+„zu klein" oder „bereits komprimiert" – der Nutzer konnte den Grund nicht erkennen.
+
+### Fix
+Neuer Action-Typ `skip_exists` in `video_compress.py`, der in der UI als **„Ziel existiert"**
+angezeigt wird (separates Tag + eigene Pill). Das generische „Überspringen" bleibt für
+Größen-/Bitraten-Skips.
+
+### Lektion
+Wenn eine Aktion mehrere Gründe haben kann, sollte die UI den konkreten Grund anzeigen –
+nicht einen generischen Sammelbegriff. Debugging-Zeit für den Nutzer: 0 statt „warum werden
+meine Dateien ignoriert?".
+
+### macOS Case-Insensitivity
+`Path.exists()`, `Path.open()` und alle Dateisystem-Operationen in Python sind auf macOS
+APFS case-insensitive – `FOO.MP4` und `foo.mp4` sind dieselbe Datei. Das ist kein Python-Bug,
+sondern Dateisystem-Verhalten. Beim Vergleich von Dateinamen in der Logik (z.B. Extension-Matching
+mit `.suffix.lower()`) ist das bereits korrekt behandelt, aber bei Existenz-Checks kann es
+zu überraschenden Treffern führen.
+
+---
+
 ## 2026-01 – NiceGUI & UI-Integration
 
 ### tqdm/print in Legacy-Scripts
