@@ -26,4 +26,5 @@ dev = [
     "pytest",
     "pytest-cov",
     "pre-commit",
+    "pyinstaller>=6.0",
 ]

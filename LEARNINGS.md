@@ -351,6 +351,13 @@ Die Video-Vorschau und Rename-Preview sind als `ui.html()` gebaut statt als `ui.
 oder `ui.row()`-Schleifen. Das gibt volle Kontrolle über das Styling (mt-table, mt-rename-row,
 mt-tag-*) und vermeidet Quasar-Defaults, die im Dark-Theme durchschlagen.
 
+### Info-Tooltips statt statische Hint-Labels
+Erklärungstexte (Codec-Unterschied, EXIF-Hinweis) nahmen als `ui.label()` dauerhaft Platz
+weg, obwohl sie nur einmal gelesen werden. `ui.icon("info_outline").tooltip("...")` ist
+kompakter – der Hinweis erscheint bei Hover und stört den normalen Workflow nicht. Passt
+zum Muster: sekundäre Information nicht im Layout konkurrieren lassen, sondern on-demand
+zeigen.
+
 ### Video-Metadaten: encoded_date als Fallback
 DJI-Dateien haben kein `recorded_date` in pymediainfo, nur `encoded_date`/`tagged_date`.
 `get_metadata()` prüft jetzt alle drei Felder. Gleichzeitig wurde die Jahr-Erkennung
