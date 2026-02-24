@@ -23,6 +23,8 @@ MEDIAINFO_URL = (
     "https://mediaarea.net/download/binary/libmediainfo0/26.01/"
     "MediaInfo_DLL_26.01_Windows_x64_WithoutInstaller.zip"
 )
+# Hash vom erfolgreichen CI-Run 2026-02-24.
+EXPECTED_SHA256 = "3e6fbb6595f7b7d18402c8399bfeefe9618c0cca1a8abed7a8efa5cd82c2387c"
 
 
 def download_and_extract():
@@ -37,6 +39,14 @@ def download_and_extract():
     sha256 = hashlib.sha256(data).hexdigest()
     print(f"    SHA256: {sha256}")
     print(f"    Size: {len(data) / (1024 * 1024):.1f} MB")
+
+    if sha256 != EXPECTED_SHA256:
+        print("    FEHLER: Hash stimmt nicht ueberein!")
+        print(f"    Erwartet: {EXPECTED_SHA256}")
+        print(f"    Erhalten: {sha256}")
+        sys.exit(1)
+    else:
+        print("    Hash OK")
 
     print("    Extracting ...")
     with zipfile.ZipFile(io.BytesIO(data)) as zf:

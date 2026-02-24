@@ -20,10 +20,14 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 VENDOR = ROOT / "vendor"
 
 # Stabile 7.1 Release – statisch gelinkt, GPL (enthält libx265)
+# Gepinnt auf konkreten Autobuild (nicht "latest") fuer reproduzierbare Builds.
 FFMPEG_URL = (
-    "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/"
-    "ffmpeg-n7.1-latest-win64-gpl-7.1.zip"
+    "https://github.com/BtbN/FFmpeg-Builds/releases/download/"
+    "autobuild-2026-02-24-16-00/"
+    "ffmpeg-n7.1.3-40-gcddd06f3b9-win64-gpl-7.1.zip"
 )
+# Nach URL-Update: CI laufen lassen, neuen Hash aus Log uebernehmen.
+EXPECTED_SHA256 = None  # TODO: nach erstem CI-Run mit gepinnter URL setzen
 
 
 def download_and_extract():
@@ -38,6 +42,16 @@ def download_and_extract():
     sha256 = hashlib.sha256(data).hexdigest()
     print(f"    SHA256: {sha256}")
     print(f"    Size: {len(data) / (1024 * 1024):.1f} MB")
+
+    if EXPECTED_SHA256 is None:
+        print("    WARNUNG: Kein EXPECTED_SHA256 gesetzt -- Hash nicht verifiziert!")
+    elif sha256 != EXPECTED_SHA256:
+        print("    FEHLER: Hash stimmt nicht ueberein!")
+        print(f"    Erwartet: {EXPECTED_SHA256}")
+        print(f"    Erhalten: {sha256}")
+        sys.exit(1)
+    else:
+        print("    Hash OK")
 
     print("    Extracting ...")
     with zipfile.ZipFile(io.BytesIO(data)) as zf:
