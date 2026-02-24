@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-FileFiend – PyInstaller Spec
+FileFiend – PyInstaller Spec (Windows)
 Build mit: python build_app.py
 """
 
@@ -12,7 +12,7 @@ from PyInstaller.utils.hooks import collect_all
 block_cipher = None
 
 # ── Pfade ermitteln ──────────────────────────────────────────
-ROOT = Path(SPECPATH)
+ROOT = Path(SPECPATH).parent.parent  # build/windows/ → Projekt-Root
 
 nicegui_path = Path(importlib.util.find_spec("nicegui").submodule_search_locations[0])
 pymediainfo_path = Path(importlib.util.find_spec("pymediainfo").submodule_search_locations[0])
@@ -31,10 +31,12 @@ datas = [
 
 binaries = [*_socketio_b, *_engineio_b]
 vendor_dir = ROOT / "vendor"
-if (vendor_dir / "ffmpeg").exists():
-    binaries.append((str(vendor_dir / "ffmpeg"), "vendor"))
-if (vendor_dir / "ffprobe").exists():
-    binaries.append((str(vendor_dir / "ffprobe"), "vendor"))
+if (vendor_dir / "ffmpeg.exe").exists():
+    binaries.append((str(vendor_dir / "ffmpeg.exe"), "vendor"))
+if (vendor_dir / "ffprobe.exe").exists():
+    binaries.append((str(vendor_dir / "ffprobe.exe"), "vendor"))
+if (vendor_dir / "MediaInfo.dll").exists():
+    binaries.append((str(vendor_dir / "MediaInfo.dll"), "vendor"))
 
 # ── Hidden Imports ───────────────────────────────────────────
 hiddenimports = [
@@ -60,13 +62,8 @@ hiddenimports = [
     "engineio.async_drivers.aiohttp",
     "socketio",
     "socketio.async_server",
-    # pywebview + pyobjc
+    # pywebview (kein PyObjC auf Windows nötig)
     "webview",
-    "objc",
-    "Foundation",
-    "AppKit",
-    "WebKit",
-    "PyObjCTools",
     # App-eigene Packages
     "PIL",
     "PIL.Image",
@@ -81,7 +78,7 @@ hiddenimports = [
 ]
 
 # ── Icon ─────────────────────────────────────────────────────
-icon_path = ROOT / "assets" / "FileFiend.icns"
+icon_path = ROOT / "assets" / "FileFiend.ico"
 icon_file = str(icon_path) if icon_path.exists() else None
 
 # ── Analysis ─────────────────────────────────────────────────
@@ -113,7 +110,6 @@ exe = EXE(
     upx=False,
     console=False,
     icon=icon_file,
-    target_arch="arm64",
 )
 
 coll = COLLECT(
@@ -123,19 +119,4 @@ coll = COLLECT(
     strip=False,
     upx=False,
     name="FileFiend",
-)
-
-app = BUNDLE(
-    coll,
-    name="FileFiend.app",
-    icon=icon_file,
-    bundle_identifier="com.filefiend.app",
-    info_plist={
-        "LSMinimumSystemVersion": "13.0",
-        "NSHighResolutionCapable": True,
-        "CFBundleShortVersionString": "1.0.0",
-        "NSDesktopFolderUsageDescription": "FileFiend benötigt Zugriff auf Ordner zum Verarbeiten von Medien-Dateien.",
-        "NSDocumentsFolderUsageDescription": "FileFiend benötigt Zugriff auf Ordner zum Verarbeiten von Medien-Dateien.",
-        "NSDownloadsFolderUsageDescription": "FileFiend benötigt Zugriff auf Ordner zum Verarbeiten von Medien-Dateien.",
-    },
 )

@@ -3,13 +3,13 @@
 # Quelle: evermeet.cx (Martin Riedl) – die bekannteste Quelle für macOS-ffmpeg-Builds.
 #
 # Verwendung:
-#   bash scripts/get_ffmpeg.sh
+#   bash build/macos/get_ffmpeg.sh
 #
 # Die Binaries landen in vendor/ffmpeg und vendor/ffprobe.
 
 set -euo pipefail
 
-VENDOR_DIR="$(cd "$(dirname "$0")/.." && pwd)/vendor"
+VENDOR_DIR="$(cd "$(dirname "$0")/../.." && pwd)/vendor"
 mkdir -p "$VENDOR_DIR"
 
 echo "==> Lade statisches ffmpeg für macOS arm64 …"
