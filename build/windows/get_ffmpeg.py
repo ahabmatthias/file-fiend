@@ -27,7 +27,7 @@ FFMPEG_URL = (
     "ffmpeg-n7.1.3-40-gcddd06f3b9-win64-gpl-7.1.zip"
 )
 # Nach URL-Update: CI laufen lassen, neuen Hash aus Log uebernehmen.
-EXPECTED_SHA256 = None  # TODO: nach erstem CI-Run mit gepinnter URL setzen
+EXPECTED_SHA256 = "53e8df0587165ed1d3868225ed9f866a6f261a7a707ba5ffcf5c4d611869297e"
 
 
 def download_and_extract():
