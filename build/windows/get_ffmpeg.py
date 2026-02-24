@@ -29,7 +29,7 @@ FFMPEG_URL = (
 def download_and_extract():
     VENDOR.mkdir(exist_ok=True)
 
-    print("==> Lade ffmpeg für Windows x86_64 …")
+    print("==> Lade ffmpeg fuer Windows x86_64 ...")
     print(f"    URL: {FFMPEG_URL}")
 
     with urlopen(FFMPEG_URL) as resp:
@@ -37,9 +37,9 @@ def download_and_extract():
 
     sha256 = hashlib.sha256(data).hexdigest()
     print(f"    SHA256: {sha256}")
-    print(f"    Größe: {len(data) / (1024 * 1024):.1f} MB")
+    print(f"    Size: {len(data) / (1024 * 1024):.1f} MB")
 
-    print("    Entpacke …")
+    print("    Extracting ...")
     with zipfile.ZipFile(io.BytesIO(data)) as zf:
         # Binaries liegen in <archiv-name>/bin/
         extracted = 0
@@ -48,7 +48,7 @@ def download_and_extract():
             if basename in ("ffmpeg.exe", "ffprobe.exe"):
                 target = VENDOR / basename
                 target.write_bytes(zf.read(name))
-                print(f"    → {target}")
+                print(f"    -> {target}")
                 extracted += 1
 
         if extracted < 2:
@@ -59,7 +59,7 @@ def download_and_extract():
             sys.exit(1)
 
     print()
-    print(f"==> Fertig! Binaries in {VENDOR}")
+    print(f"==> Done! Binaries in {VENDOR}")
 
 
 if __name__ == "__main__":

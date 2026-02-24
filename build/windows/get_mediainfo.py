@@ -28,7 +28,7 @@ MEDIAINFO_URL = (
 def download_and_extract():
     VENDOR.mkdir(exist_ok=True)
 
-    print("==> Lade MediaInfo-DLL für Windows x86_64 …")
+    print("==> Lade MediaInfo-DLL fuer Windows x86_64 ...")
     print(f"    URL: {MEDIAINFO_URL}")
 
     with urlopen(MEDIAINFO_URL) as resp:
@@ -36,9 +36,9 @@ def download_and_extract():
 
     sha256 = hashlib.sha256(data).hexdigest()
     print(f"    SHA256: {sha256}")
-    print(f"    Größe: {len(data) / (1024 * 1024):.1f} MB")
+    print(f"    Size: {len(data) / (1024 * 1024):.1f} MB")
 
-    print("    Entpacke …")
+    print("    Extracting ...")
     with zipfile.ZipFile(io.BytesIO(data)) as zf:
         # DLL liegt typischerweise direkt oder in einem Unterordner
         found = False
@@ -46,7 +46,7 @@ def download_and_extract():
             if Path(name).name == "MediaInfo.dll":
                 target = VENDOR / "MediaInfo.dll"
                 target.write_bytes(zf.read(name))
-                print(f"    → {target}")
+                print(f"    -> {target}")
                 found = True
                 break
 
@@ -58,7 +58,7 @@ def download_and_extract():
             sys.exit(1)
 
     print()
-    print(f"==> Fertig! DLL in {VENDOR}")
+    print(f"==> Done! DLL in {VENDOR}")
 
 
 if __name__ == "__main__":
