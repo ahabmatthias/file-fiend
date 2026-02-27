@@ -30,28 +30,25 @@ FFMPEG_URL = (
 EXPECTED_SHA256 = "53e8df0587165ed1d3868225ed9f866a6f261a7a707ba5ffcf5c4d611869297e"
 
 
-def download_and_extract():
+def download_and_extract() -> None:
     VENDOR.mkdir(exist_ok=True)
 
     print("==> Lade ffmpeg fuer Windows x86_64 ...")
     print(f"    URL: {FFMPEG_URL}")
 
-    with urlopen(FFMPEG_URL) as resp:
+    with urlopen(FFMPEG_URL, timeout=120) as resp:
         data = resp.read()
 
     sha256 = hashlib.sha256(data).hexdigest()
     print(f"    SHA256: {sha256}")
     print(f"    Size: {len(data) / (1024 * 1024):.1f} MB")
 
-    if EXPECTED_SHA256 is None:
-        print("    WARNUNG: Kein EXPECTED_SHA256 gesetzt -- Hash nicht verifiziert!")
-    elif sha256 != EXPECTED_SHA256:
+    if sha256 != EXPECTED_SHA256:
         print("    FEHLER: Hash stimmt nicht ueberein!")
         print(f"    Erwartet: {EXPECTED_SHA256}")
         print(f"    Erhalten: {sha256}")
         sys.exit(1)
-    else:
-        print("    Hash OK")
+    print("    Hash OK")
 
     print("    Extracting ...")
     with zipfile.ZipFile(io.BytesIO(data)) as zf:

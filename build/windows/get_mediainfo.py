@@ -27,13 +27,13 @@ MEDIAINFO_URL = (
 EXPECTED_SHA256 = "3e6fbb6595f7b7d18402c8399bfeefe9618c0cca1a8abed7a8efa5cd82c2387c"
 
 
-def download_and_extract():
+def download_and_extract() -> None:
     VENDOR.mkdir(exist_ok=True)
 
     print("==> Lade MediaInfo-DLL fuer Windows x86_64 ...")
     print(f"    URL: {MEDIAINFO_URL}")
 
-    with urlopen(MEDIAINFO_URL) as resp:
+    with urlopen(MEDIAINFO_URL, timeout=120) as resp:
         data = resp.read()
 
     sha256 = hashlib.sha256(data).hexdigest()

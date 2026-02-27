@@ -12,7 +12,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).resolve().parent
 IS_MACOS = sys.platform == "darwin"
 IS_WINDOWS = sys.platform == "win32"
 
@@ -72,11 +72,12 @@ def check_prerequisites() -> bool:
     return ok
 
 
-def build():
+def build() -> None:
     if not check_prerequisites():
         sys.exit(1)
 
     spec = get_spec_file()
+    # get_spec_file() above already exits on unsupported platforms, so IS_MACOS=False => IS_WINDOWS=True
     platform_name = "macOS" if IS_MACOS else "Windows"
     print(f"\n==> Starte PyInstaller-Build für {platform_name} …\n")
     print(f"    Spec: {spec.relative_to(ROOT)}\n")
