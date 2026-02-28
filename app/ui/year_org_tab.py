@@ -5,11 +5,12 @@ UI-Tab: Jahr-Organisation
 import asyncio
 import os
 from concurrent.futures import ThreadPoolExecutor
+from html import escape
 
 from nicegui import ui
 
-from app.core.constants import IMAGE_EXTS, VIDEO_EXTS
 from app.ui import theme
+from app.ui.utils import build_ext_filter, validate_folder_path
 
 _executor = ThreadPoolExecutor(max_workers=1)
 
@@ -62,12 +63,11 @@ def build(shared: dict):
         if not os.path.isdir(folder):
             ui.notify("Ordner nicht gefunden.", type="negative")
             return
+        if not validate_folder_path(folder):
+            ui.notify("Ordner liegt außerhalb des Home-Verzeichnisses.", type="negative")
+            return
 
-        exts: set[str] = set()
-        if cb_fotos.value:
-            exts |= IMAGE_EXTS
-        if cb_videos.value:
-            exts |= VIDEO_EXTS
+        exts = build_ext_filter(cb_fotos.value, cb_videos.value)
         if not exts:
             status_label.set_text("Bitte mindestens einen Dateityp wählen.")
             return
@@ -139,7 +139,7 @@ def build(shared: dict):
                             ui.html(
                                 f'<div style="padding:3px 14px 3px 32px;'
                                 f"font-family:Menlo,monospace;font-size:11px;"
-                                f'color:#64748b;">└─ {camera}'
+                                f'color:#64748b;">└─ {escape(camera)}'
                                 f'<span style="color:#4f8ef7;margin-left:8px;">'
                                 f"{count}</span></div>"
                             )
@@ -165,7 +165,7 @@ def build(shared: dict):
                         ui.html(
                             f'<div style="padding:3px 14px;'
                             f'font-family:Menlo,monospace;font-size:11px;'
-                            f'color:#64748b;">{inv["path"].name}</div>'
+                            f'color:#64748b;">{escape(inv["path"].name)}</div>'
                         )
                     if len(result["invalid_files"]) > 10:
                         ui.html(
@@ -212,7 +212,7 @@ def build(shared: dict):
         from app.core.year_org import execute_organization  # noqa: PLC0415
 
         group_by_camera = _state["scan"].get("group_by_camera", False)
-        exts = _state.get("extensions") or (IMAGE_EXTS | VIDEO_EXTS)
+        exts = _state["extensions"]
         loop = asyncio.get_event_loop()
 
         async def _update_exec_progress(value: float):

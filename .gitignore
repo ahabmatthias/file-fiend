@@ -6,3 +6,5 @@ __pycache__/
 build/FileFiend/
 dist/
 vendor/
+FileFiend-Windows/
+FileFiend-Windows.zip

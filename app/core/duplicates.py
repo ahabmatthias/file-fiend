@@ -10,6 +10,7 @@ Strategie:
 import hashlib
 import os
 from collections import defaultdict
+from collections.abc import Callable
 from pathlib import Path
 
 
@@ -22,13 +23,15 @@ def _md5(path: Path, chunk_size: int = 65536) -> str:
 
 
 def find_duplicates(
-    folder: str, progress_cb=None, extensions: set[str] | None = None
+    folder: str,
+    progress_cb: Callable[[int, int], None] | None = None,
+    extensions: set[str] | None = None,
 ) -> dict[str, list[str]]:
     """
-    Scannt `folder` rekursiv.
-    Gibt {hash: [pfad1, pfad2, ...]} zurück – nur Gruppen mit ≥ 2 Dateien.
-    progress_cb(scanned, total) wird optional nach jedem gehashten File aufgerufen.
-    extensions: wenn gesetzt, werden nur Dateien mit diesen Extensions berücksichtigt.
+    Scannt `folder` rekursiv und gibt {hash: [pfad1, pfad2, ...]} zurück – nur
+    Gruppen mit ≥ 2 Dateien. `progress_cb` wird optional nach jedem gehashten
+    File mit (scanned, total) aufgerufen. Wenn `extensions` gesetzt ist, werden
+    nur Dateien mit diesen Extensions berücksichtigt.
     """
     # Schritt 1: nach Größe gruppieren
     by_size: dict[int, list[Path]] = defaultdict(list)

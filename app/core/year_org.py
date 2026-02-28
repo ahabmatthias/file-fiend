@@ -13,6 +13,7 @@ import io
 import re
 import shutil
 from collections import defaultdict
+from collections.abc import Callable
 from pathlib import Path
 
 from PIL import Image
@@ -261,8 +262,8 @@ def _collect_files_with_years(
     folder_path: str,
     group_by_camera: bool = False,
     extensions: set[str] | None = None,
-    progress_cb=None,
-):
+    progress_cb: Callable[[int, int], None] | None = None,
+) -> tuple[dict, list[dict]]:
     """
     Sammelt Mediendateien und gruppiert sie nach Jahr (und optional Kamera).
 
@@ -278,17 +279,18 @@ def _collect_files_with_years(
     invalid_files = []
 
     # Pre-collect für Fortschrittsanzeige
+    active_exts = extensions if extensions is not None else ALL_MEDIA_EXTS
     all_files = [
         f
         for f in folder.rglob("*")
         if (
-            f.is_file()
-            and not f.name.startswith("._")
+            not f.name.startswith("._")
             and f.name != ".DS_Store"
             and not f.name.startswith("rename_log_")
             and not f.name.startswith("camera_rename_log_")
             and f.parent.name != "duplicates"
-            and f.suffix.lower() in (extensions if extensions is not None else ALL_MEDIA_EXTS)
+            and f.suffix.lower() in active_exts
+            and f.is_file()
         )
     ]
     total = len(all_files)
@@ -318,7 +320,7 @@ def scan_folder(
     folder_path: str,
     group_by_camera: bool = False,
     extensions: set[str] | None = None,
-    progress_cb=None,
+    progress_cb: Callable[[int, int], None] | None = None,
 ) -> dict:
     """
     Scannt den Ordner und gibt eine Vorschau zurück – ohne Dateien zu bewegen
@@ -414,7 +416,7 @@ def execute_organization(
     folder_path: str,
     group_by_camera: bool = False,
     extensions: set[str] | None = None,
-    progress_cb=None,
+    progress_cb: Callable[[int, int], None] | None = None,
 ) -> dict:
     """
     Führt die Jahr-Organisation durch (verschiebt Dateien, löscht leere Ordner).

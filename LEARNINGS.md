@@ -397,6 +397,33 @@ zu überraschenden Treffern führen.
 
 ---
 
+## 2026-02 – Build-Workflow: Eine Codebase, drei Ausgaben
+
+### Architektur
+Die drei "Versionen" der App (Terminal, macOS .app, Windows .exe) sind kein separater Code,
+sondern **ein einziger Python-Quellcode unter `app/`** mit drei verschiedenen Build-Outputs:
+
+```
+app/   ← Einmal ändern
+  ↓
+python -m app.main      (Terminal, zum Entwickeln & Testen)
+python build_app.py     → dist/FileFiend.app   (macOS)
+GitHub Actions CI       → FileFiend-Windows.zip (Windows)
+```
+
+### Workflow
+1. Änderung in `app/` machen
+2. Im Terminal testen (schnell, kein Build-Schritt)
+3. Wenn fertig: Mac-Build per `python build_app.py`, Windows-Build per CI triggern
+
+Schritt 3 ist rein mechanisch – kein erneutes Programmieren. Nur einmal coden, zweimal bauen.
+
+### Konsequenz
+Kein Feature muss „dreimal umgesetzt" werden. Packaging ist ein Build-Step, keine
+separate Implementierung. Die einzige Redundanz ist der Build-Schritt selbst (2 Builds statt 1).
+
+---
+
 ## 2026-01 – NiceGUI & UI-Integration
 
 ### tqdm/print in Legacy-Scripts

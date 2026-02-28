@@ -10,8 +10,9 @@ from pathlib import Path
 from nicegui import app as nicegui_app
 from nicegui import ui
 
-from app.core.constants import AUDIO_EXTS, IMAGE_EXTS, VIDEO_EXTS
+from app.core.constants import IMAGE_EXTS, VIDEO_EXTS
 from app.core.duplicates import find_duplicates
+from app.ui.utils import build_ext_filter, validate_folder_path
 from app.ui.utils import short_path as _short_path
 
 _executor = ThreadPoolExecutor(max_workers=1)
@@ -72,14 +73,11 @@ def build(shared: dict):
         if not folder or not os.path.isdir(folder):
             ui.notify("Bitte einen gültigen Ordner eingeben.", type="negative")
             return
+        if not validate_folder_path(folder):
+            ui.notify("Ordner liegt außerhalb des Home-Verzeichnisses.", type="negative")
+            return
 
-        exts: set[str] = set()
-        if cb_fotos.value:
-            exts |= IMAGE_EXTS
-        if cb_videos.value:
-            exts |= VIDEO_EXTS
-        if cb_audio.value:
-            exts |= AUDIO_EXTS
+        exts = build_ext_filter(cb_fotos.value, cb_videos.value, cb_audio.value)
         if not exts:
             status_label.set_text("Bitte mindestens einen Dateityp wählen.")
             return

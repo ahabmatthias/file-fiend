@@ -5,12 +5,13 @@ UI-Tab: Media Renamer
 import asyncio
 import os
 from concurrent.futures import ThreadPoolExecutor
+from html import escape
 from pathlib import Path
 
 from nicegui import ui
 
-from app.core.constants import IMAGE_EXTS, VIDEO_EXTS
 from app.ui import theme
+from app.ui.utils import build_ext_filter, validate_folder_path
 from app.ui.utils import short_path as _short_path
 
 _executor = ThreadPoolExecutor(max_workers=1)
@@ -56,12 +57,11 @@ def build(shared: dict):
         if not os.path.isdir(folder):
             ui.notify("Ordner nicht gefunden.", type="negative")
             return
+        if not validate_folder_path(folder):
+            ui.notify("Ordner liegt außerhalb des Home-Verzeichnisses.", type="negative")
+            return
 
-        exts: set[str] = set()
-        if cb_fotos.value:
-            exts |= IMAGE_EXTS
-        if cb_videos.value:
-            exts |= VIDEO_EXTS
+        exts = build_ext_filter(cb_fotos.value, cb_videos.value)
         if not exts:
             status_label.set_text("Bitte mindestens einen Dateityp wählen.")
             return
@@ -108,9 +108,9 @@ def build(shared: dict):
                         new_short = _short_path(str(Path(folder) / item["new_name"]), folder)
                         ui.html(
                             f'<div class="mt-rename-row">'
-                            f'<span class="mt-rename-old">{old_short}</span>'
+                            f'<span class="mt-rename-old">{escape(old_short)}</span>'
                             f'<span class="mt-rename-arrow">→</span>'
-                            f'<span class="mt-rename-new">{new_short}</span>'
+                            f'<span class="mt-rename-new">{escape(new_short)}</span>'
                             f"</div>"
                         )
                     if len(all_changes) > 50:

@@ -4,6 +4,8 @@ Geteilte UI-Utilities
 
 from pathlib import Path
 
+from app.core.constants import AUDIO_EXTS, IMAGE_EXTS, VIDEO_EXTS
+
 
 def short_path(path: str, folder: str) -> str:
     """Pfad relativ zum Parent des Scan-Ordners."""
@@ -21,6 +23,18 @@ def validate_folder_path(folder: str) -> bool:
         return resolved.is_relative_to(Path.home())
     except (ValueError, OSError):
         return False
+
+
+def build_ext_filter(fotos: bool, videos: bool, audio: bool = False) -> set[str]:
+    """Erstellt Extension-Set aus Checkbox-Zuständen."""
+    exts: set[str] = set()
+    if fotos:
+        exts |= IMAGE_EXTS
+    if videos:
+        exts |= VIDEO_EXTS
+    if audio:
+        exts |= AUDIO_EXTS
+    return exts
 
 
 async def pick_folder() -> str | None:
