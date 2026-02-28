@@ -26,6 +26,7 @@ def find_duplicates(
     folder: str,
     progress_cb: Callable[[int, int], None] | None = None,
     extensions: set[str] | None = None,
+    recursive: bool = True,
 ) -> dict[str, list[str]]:
     """
     Scannt `folder` rekursiv und gibt {hash: [pfad1, pfad2, ...]} zurück – nur
@@ -35,7 +36,8 @@ def find_duplicates(
     """
     # Schritt 1: nach Größe gruppieren
     by_size: dict[int, list[Path]] = defaultdict(list)
-    for root, _, files in os.walk(folder):
+    walker = os.walk(folder) if recursive else [(folder, [], os.listdir(folder))]
+    for root, _, files in walker:
         for name in files:
             path = Path(root) / name
             if path.is_file() and not name.startswith("."):

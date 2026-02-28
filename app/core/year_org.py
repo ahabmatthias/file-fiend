@@ -263,6 +263,7 @@ def _collect_files_with_years(
     group_by_camera: bool = False,
     extensions: set[str] | None = None,
     progress_cb: Callable[[int, int], None] | None = None,
+    recursive: bool = True,
 ) -> tuple[dict, list[dict]]:
     """
     Sammelt Mediendateien und gruppiert sie nach Jahr (und optional Kamera).
@@ -280,9 +281,10 @@ def _collect_files_with_years(
 
     # Pre-collect für Fortschrittsanzeige
     active_exts = extensions if extensions is not None else ALL_MEDIA_EXTS
+    glob_iter = folder.rglob("*") if recursive else folder.glob("*")
     all_files = [
         f
-        for f in folder.rglob("*")
+        for f in glob_iter
         if (
             not f.name.startswith("._")
             and f.name != ".DS_Store"
@@ -321,6 +323,7 @@ def scan_folder(
     group_by_camera: bool = False,
     extensions: set[str] | None = None,
     progress_cb: Callable[[int, int], None] | None = None,
+    recursive: bool = True,
 ) -> dict:
     """
     Scannt den Ordner und gibt eine Vorschau zurück – ohne Dateien zu bewegen
@@ -347,7 +350,11 @@ def scan_folder(
     folder = Path(folder_path)
 
     files_by_year, invalid_files = _collect_files_with_years(
-        folder_path, group_by_camera, extensions=extensions, progress_cb=progress_cb
+        folder_path,
+        group_by_camera,
+        extensions=extensions,
+        progress_cb=progress_cb,
+        recursive=recursive,
     )
 
     # Konflikt-Prüfung braucht flache {year: [Path, ...]} Struktur
@@ -417,6 +424,7 @@ def execute_organization(
     group_by_camera: bool = False,
     extensions: set[str] | None = None,
     progress_cb: Callable[[int, int], None] | None = None,
+    recursive: bool = True,
 ) -> dict:
     """
     Führt die Jahr-Organisation durch (verschiebt Dateien, löscht leere Ordner).
@@ -435,7 +443,11 @@ def execute_organization(
     folder = Path(folder_path)
 
     files_by_year, invalid_files = _collect_files_with_years(
-        folder_path, group_by_camera, extensions=extensions, progress_cb=progress_cb
+        folder_path,
+        group_by_camera,
+        extensions=extensions,
+        progress_cb=progress_cb,
+        recursive=recursive,
     )
 
     if not files_by_year:

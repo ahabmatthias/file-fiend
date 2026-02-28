@@ -8,3 +8,5 @@ dist/
 vendor/
 FileFiend-Windows/
 FileFiend-Windows.zip
+test_files/
+claude-artifacts/

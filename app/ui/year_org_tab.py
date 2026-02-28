@@ -17,15 +17,20 @@ _executor = ThreadPoolExecutor(max_workers=1)
 
 def build(shared: dict):
     """Baut den Jahr-Organisations-Tab – wird innerhalb eines tab_panel aufgerufen."""
-    # ── Kamera-Checkbox ────────────────────────────────────────────
-    camera_checkbox = ui.checkbox("Nach Kamera sortieren").classes("mt-1")
-    ui.icon("info_outline").classes("text-[#4f8ef7] text-sm cursor-default").tooltip(
-        "Kamera-Erkennung liest EXIF Make/Model aus den Dateien. "
-        "Dateien ohne EXIF landen im Ordner 'Sonstige'."
-    )
+    # ── Optionen ────────────────────────────────────────────────────
     with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
-        cb_fotos = ui.checkbox("Fotos", value=True).classes("mt-1")
-        cb_videos = ui.checkbox("Videos", value=True).classes("mt-1")
+        cb_recursive = ui.checkbox("Mit Unterordnern", value=True)
+    ui.separator()
+    with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
+        cb_fotos = ui.checkbox("Fotos", value=True)
+        cb_videos = ui.checkbox("Videos", value=True)
+    ui.separator()
+    with ui.row().classes("items-center gap-2 mt-1"):
+        camera_checkbox = ui.checkbox("Nach Kamera sortieren")
+        ui.icon("info_outline").classes("text-[#4f8ef7] text-sm cursor-default").tooltip(
+            "Kamera-Erkennung liest EXIF Make/Model aus den Dateien. "
+            "Dateien ohne EXIF landen im Ordner 'Sonstige'."
+        )
 
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
@@ -33,15 +38,15 @@ def build(shared: dict):
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
 
+    progress_bar = ui.linear_progress(value=0, show_value=False).classes("mt-progress")
+    progress_bar.visible = False
+
     # ── Pills-Zeile ───────────────────────────────────────────────
     pills_row = ui.row().classes("items-center gap-2 mt-1")
     pills_row.visible = False
 
-    progress_bar = ui.linear_progress(value=0).classes("mt-progress")
-    progress_bar.visible = False
-
     preview_col = ui.column().classes("w-full gap-0 mt-2")
-    _state: dict = {"scan": None, "folder": None, "extensions": None}
+    _state: dict = {"scan": None, "folder": None, "extensions": None, "recursive": True}
 
     def _show_pills(years: int, invalid: int, conflicts: int):
         pills_row.clear()
@@ -90,15 +95,21 @@ def build(shared: dict):
 
         async def _update_scan_progress(value: float):
             progress_bar.set_value(value)
+            status_label.set_text(f"Scanne … {int(value * 100)} %")
 
         def scan_progress_cb(done, total):
             if total > 0:
                 asyncio.run_coroutine_threadsafe(_update_scan_progress(done / total), loop)
 
+        recursive = cb_recursive.value
         result = await loop.run_in_executor(
             _executor,
             lambda: scan_folder(
-                folder, group_by_camera, extensions=exts, progress_cb=scan_progress_cb
+                folder,
+                group_by_camera,
+                extensions=exts,
+                progress_cb=scan_progress_cb,
+                recursive=recursive,
             ),
         )
 
@@ -112,6 +123,7 @@ def build(shared: dict):
         _state["scan"] = result
         _state["folder"] = folder
         _state["extensions"] = exts
+        _state["recursive"] = recursive
 
         status_label.set_text(f"{result['total_files']} Dateien gefunden")
         _show_pills(
@@ -213,10 +225,12 @@ def build(shared: dict):
 
         group_by_camera = _state["scan"].get("group_by_camera", False)
         exts = _state["extensions"]
+        recursive = _state.get("recursive", True)
         loop = asyncio.get_event_loop()
 
         async def _update_exec_progress(value: float):
             progress_bar.set_value(value)
+            status_label.set_text(f"Organisiere … {int(value * 100)} %")
 
         def exec_progress_cb(done, total):
             if total > 0:
@@ -225,7 +239,11 @@ def build(shared: dict):
         result = await loop.run_in_executor(
             _executor,
             lambda: execute_organization(
-                folder, group_by_camera, extensions=exts, progress_cb=exec_progress_cb
+                folder,
+                group_by_camera,
+                extensions=exts,
+                progress_cb=exec_progress_cb,
+                recursive=recursive,
             ),
         )
 
