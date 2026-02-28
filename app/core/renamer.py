@@ -100,6 +100,7 @@ def collect_files(
     folder = Path(folder_path)
     files = []
     exts = extensions if extensions is not None else _SUPPORTED_EXTS
+    image_exts_in_scope = IMAGE_EXTS & exts
 
     glob_fn = folder.rglob if recursive else folder.glob
     for file_path in glob_fn("*"):
@@ -109,7 +110,7 @@ def collect_files(
             and not file_path.name.startswith("._")
             and file_path.name != ".DS_Store"
         ):
-            file_type = "image" if file_path.suffix.lower() in IMAGE_EXTS else "video"
+            file_type = "image" if file_path.suffix.lower() in image_exts_in_scope else "video"
             files.append(
                 {
                     "path": file_path,

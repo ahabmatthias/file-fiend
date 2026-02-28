@@ -195,6 +195,18 @@ def _run_silent(fn, *args, **kwargs):
         return fn(*args, **kwargs)
 
 
+def _sanitize_folder_name(name: str) -> str:
+    """Bereinigt einen EXIF-Wert für die sichere Verwendung als Ordnername.
+    Ersetzt alle Zeichen außer Buchstaben, Ziffern, Leerzeichen, Bindestrich und
+    Klammern durch '_'. Verhindert Path-Traversal durch '..' oder '/' in EXIF-Feldern.
+    """
+    import re  # noqa: PLC0415
+
+    safe = re.sub(r"[^\w\s\-()\.]", "_", name)
+    # Entferne führende/folgende Punkte um '..' und versteckte Ordner zu verhindern
+    return safe.strip(".") or "Sonstige"
+
+
 def _detect_camera(file_path: Path) -> str:
     """
     Erkennt die Kamera aus EXIF-Daten oder Dateinamen.
@@ -209,12 +221,12 @@ def _detect_camera(file_path: Path) -> str:
     # 1. EXIF model direkt verwenden
     model = str(meta.get("model", "")).strip()
     if model:
-        return model
+        return _sanitize_folder_name(model)
 
     # 2. EXIF make als Fallback
     make = str(meta.get("make", "")).strip()
     if make:
-        return make
+        return _sanitize_folder_name(make)
 
     # 3. Dateiname-Präfix
     if file_path.name.upper().startswith("DJI_"):
