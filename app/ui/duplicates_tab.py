@@ -55,17 +55,20 @@ def build(shared: dict):
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
 
-    progress_bar = ui.linear_progress(value=0).classes("mt-progress")
+    progress_bar = ui.linear_progress(value=0, show_value=False).classes("mt-progress")
     progress_bar.visible = False
 
     results_col = ui.column().classes("w-full gap-4 mt-2")
     checkboxes: dict = {}
 
-    # ── Dateityp-Filter ────────────────────────────────────────────
+    # ── Optionen ───────────────────────────────────────────────────
     with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
-        cb_fotos = ui.checkbox("Fotos", value=True).classes("mt-1")
-        cb_videos = ui.checkbox("Videos", value=True).classes("mt-1")
-        cb_audio = ui.checkbox("Audio", value=False).classes("mt-1")
+        cb_recursive = ui.checkbox("Mit Unterordnern", value=True)
+    ui.separator()
+    with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
+        cb_fotos = ui.checkbox("Fotos", value=True)
+        cb_videos = ui.checkbox("Videos", value=True)
+        cb_audio = ui.checkbox("Audio", value=False)
 
     # ── Scan ───────────────────────────────────────────────────────
     async def do_scan():
@@ -93,13 +96,16 @@ def build(shared: dict):
 
         async def _update_progress(value: float):
             progress_bar.set_value(value)
+            status_label.set_text(f"Scanne … {int(value * 100)} %")
 
         def progress_cb(done, total):
             if total > 0:
                 asyncio.run_coroutine_threadsafe(_update_progress(done / total), loop)
 
+        recursive = cb_recursive.value
         dupes = await loop.run_in_executor(
-            _executor, lambda: find_duplicates(folder, progress_cb, extensions=exts)
+            _executor,
+            lambda: find_duplicates(folder, progress_cb, extensions=exts, recursive=recursive),
         )
 
         spinner.visible = False

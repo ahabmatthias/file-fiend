@@ -20,9 +20,11 @@ _executor = ThreadPoolExecutor(max_workers=1)
 def build(shared: dict):
     """Baut den Media-Renamer-Tab – wird innerhalb eines tab_panel aufgerufen."""
     with ui.row().classes("items-center gap-4 flex-wrap"):
-        cb_recursive = ui.checkbox("Mit Unterordnern", value=True).classes("mt-1")
-        cb_fotos = ui.checkbox("Fotos", value=True).classes("mt-1")
-        cb_videos = ui.checkbox("Videos", value=True).classes("mt-1")
+        cb_recursive = ui.checkbox("Mit Unterordnern", value=True)
+    ui.separator()
+    with ui.row().classes("items-center gap-4 flex-wrap"):
+        cb_fotos = ui.checkbox("Fotos", value=True)
+        cb_videos = ui.checkbox("Videos", value=True)
 
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):

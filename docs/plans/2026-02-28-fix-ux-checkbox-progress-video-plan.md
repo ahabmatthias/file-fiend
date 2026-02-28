@@ -1,7 +1,7 @@
 ---
 title: "fix: UX-Fixes – Fortschritt, Checkboxen, Video-Zielordner"
 type: fix
-status: active
+status: completed
 date: 2026-02-28
 origin: docs/brainstorms/2026-02-28-weitere-ideen.md
 ---
@@ -17,13 +17,13 @@ umgesetzt (see brainstorm: docs/brainstorms/2026-02-28-weitere-ideen.md).
 
 ## Acceptance Criteria
 
-- [ ] **B1** – Fortschrittswert zeigt `92 %` statt `0.9173` (Duplikate- und Sortieren-Tab)
-- [ ] **B2** – Fortschrittsbalken erscheint in allen Tabs an derselben Position (direkt unter Status-Label)
-- [ ] **B3** – Video-Tab: Zielordner wird automatisch mit `<Quellordner>_compressed` vorausgefüllt, überschreibt keine manuell gesetzten Werte
-- [ ] **B4** – Kein redundantes `mt-1` auf einzelnen Checkboxen; Spacing nur über `gap-4` auf dem Row-Container
-- [ ] **B5** – Duplikate- und Sortieren-Tab haben eine „Mit Unterordnern"-Checkbox (Default: an)
-- [ ] **B6** – `ui.separator()` trennt Scope-Option von Typ-Filtern in allen drei Tabs; im Sortieren-Tab auch Typ von Kamera-Option
-- [ ] **B7** – Kamera-Checkbox und Info-Icon liegen in einer gemeinsamen `ui.row().classes("items-center gap-2")`
+- [x] **B1** – Fortschrittswert zeigt `92 %` statt `0.9173` (Duplikate- und Sortieren-Tab)
+- [x] **B2** – Fortschrittsbalken erscheint in allen Tabs an derselben Position (direkt unter Status-Label)
+- [x] **B3** – Video-Tab: Zielordner wird automatisch mit `<Quellordner>_compressed` vorausgefüllt, überschreibt keine manuell gesetzten Werte
+- [x] **B4** – Kein redundantes `mt-1` auf einzelnen Checkboxen; Spacing nur über `gap-4` auf dem Row-Container
+- [x] **B5** – Duplikate- und Sortieren-Tab haben eine „Mit Unterordnern"-Checkbox (Default: an)
+- [x] **B6** – `ui.separator()` trennt Scope-Option von Typ-Filtern in allen drei Tabs; im Sortieren-Tab auch Typ von Kamera-Option
+- [x] **B7** – Kamera-Checkbox und Info-Icon liegen in einer gemeinsamen `ui.row().classes("items-center gap-2")`
 
 ---
 

@@ -47,6 +47,11 @@ def build(shared: dict):
                     "mt-btn-ghost"
                 ).props("no-caps")
 
+            # Auto-Fill Zielordner aus Quellordner
+            src = (shared.get("folder") or "").strip()
+            if src and not target_input.value:
+                target_input.set_value(src + "_compressed")
+
             with ui.row().classes("items-center gap-4"):
                 codec_select = (
                     ui.select(
