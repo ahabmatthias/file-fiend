@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 from nicegui import ui
 
+from app.core.constants import IMAGE_EXTS, VIDEO_EXTS
 from app.ui import theme
 
 _executor = ThreadPoolExecutor(max_workers=1)
@@ -21,6 +22,9 @@ def build(shared: dict):
         "Kamera-Erkennung liest EXIF Make/Model aus den Dateien. "
         "Dateien ohne EXIF landen im Ordner 'Sonstige'."
     )
+    with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
+        cb_fotos = ui.checkbox("Fotos", value=True).classes("mt-1")
+        cb_videos = ui.checkbox("Videos", value=True).classes("mt-1")
 
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
@@ -36,7 +40,7 @@ def build(shared: dict):
     progress_bar.visible = False
 
     preview_col = ui.column().classes("w-full gap-0 mt-2")
-    _state: dict = {"scan": None, "folder": None}
+    _state: dict = {"scan": None, "folder": None, "extensions": None}
 
     def _show_pills(years: int, invalid: int, conflicts: int):
         pills_row.clear()
@@ -59,6 +63,15 @@ def build(shared: dict):
             ui.notify("Ordner nicht gefunden.", type="negative")
             return
 
+        exts: set[str] = set()
+        if cb_fotos.value:
+            exts |= IMAGE_EXTS
+        if cb_videos.value:
+            exts |= VIDEO_EXTS
+        if not exts:
+            status_label.set_text("Bitte mindestens einen Dateityp wählen.")
+            return
+
         group_by_camera = camera_checkbox.value
         spinner.visible = True
         status_label.set_text("Scanne …")
@@ -66,6 +79,7 @@ def build(shared: dict):
         pills_row.visible = False
         _state["scan"] = None
         _state["folder"] = None
+        _state["extensions"] = None
         btn_execute.disable()
         progress_bar.set_value(0)
         progress_bar.visible = True
@@ -83,7 +97,9 @@ def build(shared: dict):
 
         result = await loop.run_in_executor(
             _executor,
-            lambda: scan_folder(folder, group_by_camera, progress_cb=scan_progress_cb),
+            lambda: scan_folder(
+                folder, group_by_camera, extensions=exts, progress_cb=scan_progress_cb
+            ),
         )
 
         spinner.visible = False
@@ -95,6 +111,7 @@ def build(shared: dict):
 
         _state["scan"] = result
         _state["folder"] = folder
+        _state["extensions"] = exts
 
         status_label.set_text(f"{result['total_files']} Dateien gefunden")
         _show_pills(
@@ -195,6 +212,7 @@ def build(shared: dict):
         from app.core.year_org import execute_organization  # noqa: PLC0415
 
         group_by_camera = _state["scan"].get("group_by_camera", False)
+        exts = _state.get("extensions") or (IMAGE_EXTS | VIDEO_EXTS)
         loop = asyncio.get_event_loop()
 
         async def _update_exec_progress(value: float):
@@ -206,7 +224,9 @@ def build(shared: dict):
 
         result = await loop.run_in_executor(
             _executor,
-            lambda: execute_organization(folder, group_by_camera, progress_cb=exec_progress_cb),
+            lambda: execute_organization(
+                folder, group_by_camera, extensions=exts, progress_cb=exec_progress_cb
+            ),
         )
 
         spinner.visible = False

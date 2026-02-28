@@ -10,7 +10,7 @@ from pathlib import Path
 from nicegui import app as nicegui_app
 from nicegui import ui
 
-from app.core.constants import IMAGE_EXTS, VIDEO_EXTS
+from app.core.constants import AUDIO_EXTS, IMAGE_EXTS, VIDEO_EXTS
 from app.core.duplicates import find_duplicates
 from app.ui.utils import short_path as _short_path
 
@@ -60,11 +60,28 @@ def build(shared: dict):
     results_col = ui.column().classes("w-full gap-4 mt-2")
     checkboxes: dict = {}
 
+    # ── Dateityp-Filter ────────────────────────────────────────────
+    with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
+        cb_fotos = ui.checkbox("Fotos", value=True).classes("mt-1")
+        cb_videos = ui.checkbox("Videos", value=True).classes("mt-1")
+        cb_audio = ui.checkbox("Audio", value=False).classes("mt-1")
+
     # ── Scan ───────────────────────────────────────────────────────
     async def do_scan():
         folder = shared["folder"].strip() if shared else ""
         if not folder or not os.path.isdir(folder):
             ui.notify("Bitte einen gültigen Ordner eingeben.", type="negative")
+            return
+
+        exts: set[str] = set()
+        if cb_fotos.value:
+            exts |= IMAGE_EXTS
+        if cb_videos.value:
+            exts |= VIDEO_EXTS
+        if cb_audio.value:
+            exts |= AUDIO_EXTS
+        if not exts:
+            status_label.set_text("Bitte mindestens einen Dateityp wählen.")
             return
 
         spinner.visible = True
@@ -83,7 +100,9 @@ def build(shared: dict):
             if total > 0:
                 asyncio.run_coroutine_threadsafe(_update_progress(done / total), loop)
 
-        dupes = await loop.run_in_executor(_executor, lambda: find_duplicates(folder, progress_cb))
+        dupes = await loop.run_in_executor(
+            _executor, lambda: find_duplicates(folder, progress_cb, extensions=exts)
+        )
 
         spinner.visible = False
         progress_bar.visible = False

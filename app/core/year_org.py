@@ -245,7 +245,12 @@ def _extract_year(file_path: Path) -> int | None:
     return extract_year_from_filename(file_path.name)
 
 
-def _collect_files_with_years(folder_path: str, group_by_camera: bool = False, progress_cb=None):
+def _collect_files_with_years(
+    folder_path: str,
+    group_by_camera: bool = False,
+    extensions: set[str] | None = None,
+    progress_cb=None,
+):
     """
     Sammelt Mediendateien und gruppiert sie nach Jahr (und optional Kamera).
 
@@ -271,7 +276,7 @@ def _collect_files_with_years(folder_path: str, group_by_camera: bool = False, p
             and not f.name.startswith("rename_log_")
             and not f.name.startswith("camera_rename_log_")
             and f.parent.name != "duplicates"
-            and f.suffix.lower() in ALL_MEDIA_EXTS
+            and f.suffix.lower() in (extensions if extensions is not None else ALL_MEDIA_EXTS)
         )
     ]
     total = len(all_files)
@@ -297,7 +302,12 @@ def _collect_files_with_years(folder_path: str, group_by_camera: bool = False, p
     return files_by_year, invalid_files
 
 
-def scan_folder(folder_path: str, group_by_camera: bool = False, progress_cb=None) -> dict:
+def scan_folder(
+    folder_path: str,
+    group_by_camera: bool = False,
+    extensions: set[str] | None = None,
+    progress_cb=None,
+) -> dict:
     """
     Scannt den Ordner und gibt eine Vorschau zurück – ohne Dateien zu bewegen
     und ohne Log-File zu schreiben.
@@ -323,7 +333,7 @@ def scan_folder(folder_path: str, group_by_camera: bool = False, progress_cb=Non
     folder = Path(folder_path)
 
     files_by_year, invalid_files = _collect_files_with_years(
-        folder_path, group_by_camera, progress_cb=progress_cb
+        folder_path, group_by_camera, extensions=extensions, progress_cb=progress_cb
     )
 
     # Konflikt-Prüfung braucht flache {year: [Path, ...]} Struktur
@@ -388,7 +398,12 @@ def _move_with_camera_groups(files_by_year: dict, folder: Path):
     return moved_files, errors
 
 
-def execute_organization(folder_path: str, group_by_camera: bool = False, progress_cb=None) -> dict:
+def execute_organization(
+    folder_path: str,
+    group_by_camera: bool = False,
+    extensions: set[str] | None = None,
+    progress_cb=None,
+) -> dict:
     """
     Führt die Jahr-Organisation durch (verschiebt Dateien, löscht leere Ordner).
 
@@ -406,7 +421,7 @@ def execute_organization(folder_path: str, group_by_camera: bool = False, progre
     folder = Path(folder_path)
 
     files_by_year, invalid_files = _collect_files_with_years(
-        folder_path, group_by_camera, progress_cb=progress_cb
+        folder_path, group_by_camera, extensions=extensions, progress_cb=progress_cb
     )
 
     if not files_by_year:

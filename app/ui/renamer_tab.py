@@ -9,6 +9,7 @@ from pathlib import Path
 
 from nicegui import ui
 
+from app.core.constants import IMAGE_EXTS, VIDEO_EXTS
 from app.ui import theme
 from app.ui.utils import short_path as _short_path
 
@@ -17,7 +18,10 @@ _executor = ThreadPoolExecutor(max_workers=1)
 
 def build(shared: dict):
     """Baut den Media-Renamer-Tab – wird innerhalb eines tab_panel aufgerufen."""
-    cb_recursive = ui.checkbox("Mit Unterordnern", value=True).classes("mt-1")
+    with ui.row().classes("items-center gap-4 flex-wrap"):
+        cb_recursive = ui.checkbox("Mit Unterordnern", value=True).classes("mt-1")
+        cb_fotos = ui.checkbox("Fotos", value=True).classes("mt-1")
+        cb_videos = ui.checkbox("Videos", value=True).classes("mt-1")
 
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
@@ -53,6 +57,15 @@ def build(shared: dict):
             ui.notify("Ordner nicht gefunden.", type="negative")
             return
 
+        exts: set[str] = set()
+        if cb_fotos.value:
+            exts |= IMAGE_EXTS
+        if cb_videos.value:
+            exts |= VIDEO_EXTS
+        if not exts:
+            status_label.set_text("Bitte mindestens einen Dateityp wählen.")
+            return
+
         spinner.visible = True
         status_label.set_text("Scanne …")
         preview_col.clear()
@@ -66,7 +79,7 @@ def build(shared: dict):
         loop = asyncio.get_event_loop()
         recursive = cb_recursive.value
         files = await loop.run_in_executor(
-            _executor, lambda: collect_files(folder, recursive=recursive)
+            _executor, lambda: collect_files(folder, recursive=recursive, extensions=exts)
         )
 
         if not files:
