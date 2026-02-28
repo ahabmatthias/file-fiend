@@ -1,6 +1,6 @@
 # Media Tools – Projektplan
 
-Ziel: Lern-Projekt. Minimale Desktop-App mit NiceGUI, später als macOS `.app` verpackt.
+Ziel: Lern-Projekt. Minimale Desktop-App mit NiceGUI, als macOS `.app` und Windows `.exe` verpackt.
 Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
 
 ---
@@ -43,10 +43,11 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
 
 ### Phase 2: Packaging
 
-- [ ] Schritt 6: Als macOS `.app` verpacken
-  - Tool: PyInstaller (py2app hat häufiger Probleme mit modernen Python-Versionen)
-  - Build-Script erstellen
-  - Testen ob natives Fenster funktioniert
+- [x] Schritt 6: Als macOS `.app` verpacken (PyInstaller, `build/macos/`)
+- [x] Schritt 7: Als Windows `.exe` verpacken (PyInstaller, `build/windows/`, portable ZIP)
+  - CI via GitHub Actions (`.github/workflows/build-windows.yml`)
+  - ffmpeg + ffprobe + MediaInfo.dll gebundelt
+  - SHA256-Verifikation aller externen Binaries
 
 ---
 
@@ -54,8 +55,9 @@ Fokus auf funktionierende Features – kein Anspruch auf poliertes Design.
 
 - Python 3.10+ (3.13 empfohlen – venv nutzt 3.13)
 - [NiceGUI](https://nicegui.io) – UI-Framework (Web-basiert, native Window via pywebview)
-- pywebview – für natives macOS-Fenster
+- pywebview – für natives Fenster (macOS + Windows)
 - gesamte Logik in `app/core/`, UI-Tabs in `app/ui/`
+- Build-Configs in `build/macos/` und `build/windows/`, plattformübergreifendes Build-Script: `build_app.py`
 
 ## Starten
 
