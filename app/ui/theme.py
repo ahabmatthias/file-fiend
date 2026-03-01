@@ -7,19 +7,22 @@ import re
 
 from nicegui import ui
 
-# ── Design-Tokens (spiegeln den Mockup) ───────────────────────────────────────
+# ── Design-Tokens – Warme Palette ─────────────────────────────────────────────
 COLORS = {
-    "bg": "#0f1117",
-    "surface": "#161b27",
-    "surface2": "#1e2535",
-    "border": "#2a3147",
-    "accent": "#4f8ef7",
-    "accent2": "#6c63ff",
-    "green": "#34d399",
-    "red": "#f87171",
-    "neutral": "#7dd3fc",
-    "muted": "#64748b",
-    "text": "#e2e8f0",
+    # Surfaces
+    "bg": "#1a1412",  # warmes Anthrazit
+    "surface": "#231e1a",  # Karten, Header, Tab-Bar
+    "surface2": "#2e2722",  # Inputs, Hover
+    "border": "#3d332c",  # Separator, Scrollbar
+    # Content
+    "text": "#f0ebe5",  # leicht warmes Weiß
+    "muted": "#8b7355",  # Grau-Braun für Labels/Captions
+    # Semantic
+    "accent": "#e8622c",  # Orange-Rot Primärfarbe
+    "accent2": "#f59e0b",  # Gold/Amber Gradient-Ende
+    "success": "#4ade80",  # wärmeres Grün
+    "danger": "#ef4444",  # Rot
+    "neutral": "#d4a574",  # Beige/Sand
 }
 
 _CSS_TEMPLATE = """
@@ -77,16 +80,16 @@ body, .q-page, .nicegui-content {
     box-shadow: none !important;
 }
 
-/* Primary */
-.q-btn.mt-btn-primary { background: $accent$ !important; color: #fff !important; }
+/* Primary – dunkler Text auf Orange (WCAG AA: 5.4:1) */
+.q-btn.mt-btn-primary { background: $accent$ !important; color: $bg$ !important; }
 .q-btn.mt-btn-primary:hover { filter: brightness(1.15); }
 
-/* Success */
-.q-btn.mt-btn-success { background: $green$ !important; color: $bg$ !important; }
+/* Success – dunkler Text auf Grün */
+.q-btn.mt-btn-success { background: $success$ !important; color: $bg$ !important; }
 .q-btn.mt-btn-success:hover { filter: brightness(1.1); }
 
 /* Danger */
-.q-btn.mt-btn-danger { background: $red$ !important; color: #fff !important; }
+.q-btn.mt-btn-danger { background: $danger$ !important; color: #fff !important; }
 .q-btn.mt-btn-danger:hover { filter: brightness(1.1); }
 
 /* Ghost */
@@ -131,9 +134,10 @@ body, .q-page, .nicegui-content {
     white-space: nowrap;
 }
 .mt-pill-info    { border-color: $accent$ !important; color: $accent$ !important; }
-.mt-pill-good    { border-color: $green$ !important; color: $green$ !important; }
-.mt-pill-neutral { border-color: #3b82c4 !important; color: $neutral$ !important; }
-.mt-pill-danger  { border-color: $red$ !important; color: $red$ !important; }
+.mt-pill-success { border-color: $success$ !important; color: $success$ !important; }
+.mt-pill-good    { border-color: $success$ !important; color: $success$ !important; }
+.mt-pill-neutral { border-color: #a88a6a !important; color: $neutral$ !important; }
+.mt-pill-danger  { border-color: $danger$ !important; color: $danger$ !important; }
 
 /* ── Progress Bar ──────────────────────────────────────────── */
 .mt-progress .q-linear-progress__track { background: $surface2$ !important; }
@@ -156,7 +160,7 @@ body, .q-page, .nicegui-content {
     color: $text$ !important;
     font-family: 'Menlo', 'JetBrains Mono', monospace !important;
     font-size: 12px !important;
-    border-bottom: 1px solid #1a2033 !important;
+    border-bottom: 1px solid #1f1916 !important;
 }
 .mt-table .q-table tbody tr:hover td { background: $surface2$ !important; }
 .mt-table .q-table tbody tr:last-child td { border-bottom: none !important; }
@@ -172,9 +176,9 @@ body, .q-page, .nicegui-content {
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
-.mt-tag-compress { background: #1e3a5f; color: $accent$; }
+.mt-tag-compress { background: #3a2218; color: $accent$; }
 .mt-tag-skip     { background: $surface2$; color: $muted$; }
-.mt-tag-copy     { background: #1e2a3f; color: $neutral$; }
+.mt-tag-copy     { background: #2a2018; color: $neutral$; }
 
 /* ── Rename Preview Rows ───────────────────────────────────── */
 .mt-rename-row {
@@ -183,14 +187,14 @@ body, .q-page, .nicegui-content {
     align-items: center;
     gap: 8px;
     padding: 6px 14px;
-    border-bottom: 1px solid #1a2033;
+    border-bottom: 1px solid #1f1916;
     font-family: 'Menlo', 'JetBrains Mono', monospace;
     font-size: 11px;
 }
 .mt-rename-row:hover { background: $surface2$; }
 .mt-rename-old { color: $muted$; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mt-rename-arrow { color: #3b4a63; }
-.mt-rename-new { color: $green$; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mt-rename-arrow { color: #6b5a48; }
+.mt-rename-new { color: $success$; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── Duplikat-Gruppen ──────────────────────────────────────── */
 .mt-dupe-group {
@@ -209,7 +213,7 @@ body, .q-page, .nicegui-content {
 }
 .mt-dupe-row {
     padding: 8px 14px;
-    border-bottom: 1px solid #1a2033;
+    border-bottom: 1px solid #1f1916;
     transition: background 0.1s;
 }
 .mt-dupe-row:hover { background: $surface2$; }
@@ -245,6 +249,9 @@ body, .q-page, .nicegui-content {
 
 /* ── Notifications ─────────────────────────────────────────── */
 .q-notification { border-radius: 8px !important; font-size: 13px !important; }
+
+/* ── Focus Ring ────────────────────────────────────────────── */
+*:focus-visible { outline-color: $accent$ !important; }
 """
 
 
@@ -268,7 +275,7 @@ def apply() -> None:
 def pill(text: str, variant: str = "") -> None:
     """
     Rendert ein Status-Pill als inline HTML.
-    variant: '' | 'info' | 'good' | 'neutral' | 'danger'
+    variant: '' | 'info' | 'good' | 'success' | 'neutral' | 'danger'
     """
     cls = f"mt-pill mt-pill-{variant}" if variant else "mt-pill"
     ui.html(f'<span class="{cls}">{text}</span>')
