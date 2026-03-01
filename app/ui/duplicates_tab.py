@@ -139,7 +139,7 @@ def build(shared: dict):
                                 # Vorschau
                                 if url:
                                     ui.image(url).classes("w-16 h-16 object-cover rounded").style(
-                                        "border: 1px solid #3d332c;"
+                                        "border: 1px solid #262b36;"
                                     )
                                 else:
                                     with (
@@ -147,10 +147,10 @@ def build(shared: dict):
                                         .classes(
                                             "w-16 h-16 flex items-center justify-center rounded"
                                         )
-                                        .style("background: #2e2722; border: 1px solid #3d332c;")
+                                        .style("background: #1c2028; border: 1px solid #262b36;")
                                     ):
                                         ui.icon(_file_icon(path), size="1.5rem").classes(
-                                            "text-[#8b7355]"
+                                            "text-[#7f8694]"
                                         )
 
                                 # Info + Checkbox
@@ -196,7 +196,7 @@ def build(shared: dict):
 
         with ui.dialog() as dialog, ui.card().classes("mt-card"):
             ui.label(f"{len(to_delete)} Datei(en) endgültig löschen?").classes(
-                "font-semibold text-[#f0ebe5]"
+                "font-semibold text-[#e4e7ec]"
             )
             ui.label("Diese Aktion kann nicht rückgängig gemacht werden.").classes("mt-hint")
             with ui.row().classes("w-full justify-end gap-2 mt-2"):

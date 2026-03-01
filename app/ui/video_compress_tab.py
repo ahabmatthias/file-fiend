@@ -74,7 +74,7 @@ def build(shared: dict):
 
                 recursive_cb = ui.checkbox("Mit Unterordnern")
 
-            ui.icon("info_outline").classes("text-[#e8622c] text-sm cursor-default").tooltip(
+            ui.icon("info_outline").classes("text-[#f63138] text-sm cursor-default").tooltip(
                 "Hardware nutzt den Apple-Chip direkt – schnell und stromsparend. "
                 "Software encodiert in reinem Code – langsamer, minimal präziser."
             )

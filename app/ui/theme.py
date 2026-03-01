@@ -33,6 +33,15 @@ COLORS = {
 }
 
 _CSS_TEMPLATE = """
+/* ── Quasar Brand-Farben überschreiben ─────────────────────── */
+:root {
+    --q-primary: $accent$;
+    --q-secondary: $muted$;
+    --q-positive: $success$;
+    --q-negative: $danger$;
+    --q-info: $accent$;
+}
+
 /* ── Reset & Base ──────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -74,11 +83,11 @@ body, .q-page, .nicegui-content {
 .q-field__label { color: $muted$ !important; }
 
 /* ── Buttons ───────────────────────────────────────────────── */
-/* Shared base – overrides Quasar inline styles */
-.q-btn.mt-btn-primary,
-.q-btn.mt-btn-success,
-.q-btn.mt-btn-danger,
-.q-btn.mt-btn-ghost {
+/* Shared base – body prefix beats Quasar's .bg-primary specificity */
+body .q-btn.mt-btn-primary,
+body .q-btn.mt-btn-success,
+body .q-btn.mt-btn-danger,
+body .q-btn.mt-btn-ghost {
     border-radius: 6px !important;
     font-size: 12px !important;
     font-weight: 500 !important;
@@ -87,28 +96,28 @@ body, .q-page, .nicegui-content {
     box-shadow: none !important;
 }
 
-/* Primary – dunkler Text auf Orange (WCAG AA: 5.4:1) */
-.q-btn.mt-btn-primary { background: $accent$ !important; color: $bg$ !important; }
-.q-btn.mt-btn-primary:hover { filter: brightness(1.15); }
+/* Primary – dunkler Text auf Rot */
+body .q-btn.mt-btn-primary { background: $accent$ !important; color: #fff !important; }
+body .q-btn.mt-btn-primary:hover { filter: brightness(1.15); }
 
 /* Success – dunkler Text auf Grün */
-.q-btn.mt-btn-success { background: $success$ !important; color: $bg$ !important; }
-.q-btn.mt-btn-success:hover { filter: brightness(1.1); }
+body .q-btn.mt-btn-success { background: $success$ !important; color: $bg$ !important; }
+body .q-btn.mt-btn-success:hover { filter: brightness(1.1); }
 
 /* Danger */
-.q-btn.mt-btn-danger { background: $danger$ !important; color: #fff !important; }
-.q-btn.mt-btn-danger:hover { filter: brightness(1.1); }
+body .q-btn.mt-btn-danger { background: $danger$ !important; color: #fff !important; }
+body .q-btn.mt-btn-danger:hover { filter: brightness(1.1); }
 
 /* Ghost */
-.q-btn.mt-btn-ghost {
+body .q-btn.mt-btn-ghost {
     background: $surface2$ !important;
     color: $text$ !important;
     border: 1px solid $border$ !important;
 }
-.q-btn.mt-btn-ghost:hover { border-color: $accent$ !important; }
+body .q-btn.mt-btn-ghost:hover { border-color: $accent$ !important; }
 
 /* Disabled state */
-.q-btn.disabled, .q-btn[disabled] { opacity: 0.35 !important; }
+body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 
 /* ── Cards ─────────────────────────────────────────────────── */
 .mt-card {
@@ -322,6 +331,12 @@ CSS = _build_css()
 
 def apply() -> None:
     """CSS in die Seite injizieren. Einmalig in main() aufrufen."""
+    ui.colors(
+        primary=COLORS["accent"],
+        positive=COLORS["success"],
+        negative=COLORS["danger"],
+        accent=COLORS["accent"],
+    )
     ui.add_head_html(f"<style>{CSS}</style>")
 
 

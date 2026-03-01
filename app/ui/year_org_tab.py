@@ -27,7 +27,7 @@ def build(shared: dict):
     ui.separator()
     with ui.row().classes("items-center gap-2 mt-1"):
         camera_checkbox = ui.checkbox("Nach Kamera sortieren")
-        ui.icon("info_outline").classes("text-[#e8622c] text-sm cursor-default").tooltip(
+        ui.icon("info_outline").classes("text-[#f63138] text-sm cursor-default").tooltip(
             "Kamera-Erkennung liest EXIF Make/Model aus den Dateien. "
             "Dateien ohne EXIF landen im Ordner 'Sonstige'."
         )
@@ -140,10 +140,10 @@ def build(shared: dict):
                         cam_dict = result["files_by_year"][year]
                         total_in_year = sum(len(v) for v in cam_dict.values())
                         ui.html(
-                            f'<div style="padding:6px 14px;color:#f0ebe5;'
+                            f'<div style="padding:6px 14px;color:#e4e7ec;'
                             f"font-family:Menlo,monospace;font-size:12px;"
                             f'font-weight:600;">'
-                            f'{year}/ <span style="color:#8b7355;font-weight:400;">'
+                            f'{year}/ <span style="color:#7f8694;font-weight:400;">'
                             f"({total_in_year})</span></div>"
                         )
                         for camera in sorted(cam_dict.keys()):
@@ -151,8 +151,8 @@ def build(shared: dict):
                             ui.html(
                                 f'<div style="padding:3px 14px 3px 32px;'
                                 f"font-family:Menlo,monospace;font-size:11px;"
-                                f'color:#8b7355;">└─ {escape(camera)}'
-                                f'<span style="color:#e8622c;margin-left:8px;">'
+                                f'color:#7f8694;">└─ {escape(camera)}'
+                                f'<span style="color:#f63138;margin-left:8px;">'
                                 f"{count}</span></div>"
                             )
                 else:
@@ -162,9 +162,9 @@ def build(shared: dict):
                         ui.html(
                             f'<div style="padding:6px 14px;'
                             f"font-family:Menlo,monospace;font-size:12px;"
-                            f'color:#f0ebe5;border-bottom:1px solid #1f1916;">'
-                            f'{year}/ <span style="color:#e8622c;">→</span> '
-                            f'<span style="color:#4ade80;">{len(files)} Datei(en)'
+                            f'color:#e4e7ec;border-bottom:1px solid #161920;">'
+                            f'{year}/ <span style="color:#f63138;">→</span> '
+                            f'<span style="color:#22c55e;">{len(files)} Datei(en)'
                             f"</span></div>"
                         )
 
@@ -177,7 +177,7 @@ def build(shared: dict):
                         ui.html(
                             f'<div style="padding:3px 14px;'
                             f'font-family:Menlo,monospace;font-size:11px;'
-                            f'color:#8b7355;">{escape(inv["path"].name)}</div>'
+                            f'color:#7f8694;">{escape(inv["path"].name)}</div>'
                         )
                     if len(result["invalid_files"]) > 10:
                         ui.html(
@@ -188,14 +188,14 @@ def build(shared: dict):
                 if result["conflicts"]:
                     ui.html(
                         f'<div class="mt-card-header" style="margin-top:4px;'
-                        f'color:#ef4444 !important;">'
+                        f'color:#f87171 !important;">'
                         f'{len(result["conflicts"])} Konflikte – Ausführen blockiert</div>'
                     )
                     for c in result["conflicts"][:5]:
                         ui.html(
                             f'<div style="padding:3px 14px;'
                             f'font-family:Menlo,monospace;font-size:11px;'
-                            f'color:#ef4444;">{c["filename"]} (Jahr {c["year"]})</div>'
+                            f'color:#f87171;">{c["filename"]} (Jahr {c["year"]})</div>'
                         )
 
         if not result["conflicts"]:

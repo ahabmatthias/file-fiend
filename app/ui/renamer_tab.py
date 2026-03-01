@@ -157,7 +157,7 @@ def build(shared: dict):
                             f'<div class="mt-rename-row">'
                             f'<span class="mt-rename-old">{err["file"]}</span>'
                             f'<span class="mt-rename-arrow">✕</span>'
-                            f'<span style="color:#ef4444">{err["error"]}</span>'
+                            f'<span style="color:#f87171">{err["error"]}</span>'
                             f"</div>"
                         )
 
@@ -175,7 +175,7 @@ def build(shared: dict):
             await _execute_rename()
 
         with ui.dialog() as dialog, ui.card().classes("mt-card"):
-            ui.label(f"{n_renames} Datei(en) umbenennen?").classes("font-semibold text-[#f0ebe5]")
+            ui.label(f"{n_renames} Datei(en) umbenennen?").classes("font-semibold text-[#e4e7ec]")
             ui.label("Die Originalnamen gehen verloren.").classes("mt-hint")
             with ui.row().classes("w-full justify-end gap-2 mt-2"):
                 ui.button("Abbrechen", on_click=dialog.close).classes("mt-btn-ghost").props(
