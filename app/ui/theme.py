@@ -7,22 +7,29 @@ import re
 
 from nicegui import ui
 
-# ── Design-Tokens – Warme Palette ─────────────────────────────────────────────
+# ── Design-Tokens – Kalte Palette + Logo-Rot ─────────────────────────────────
 COLORS = {
     # Surfaces
-    "bg": "#1a1412",  # warmes Anthrazit
-    "surface": "#231e1a",  # Karten, Header, Tab-Bar
-    "surface2": "#2e2722",  # Inputs, Hover
-    "border": "#3d332c",  # Separator, Scrollbar
-    # Content
-    "text": "#f0ebe5",  # leicht warmes Weiß
-    "muted": "#8b7355",  # Grau-Braun für Labels/Captions
+    "bg": "#0e1015",  # Seiten-Hintergrund
+    "surface": "#161920",  # Header, Tab-Bar, Karten
+    "surface2": "#1c2028",  # Inputs, Hover
+    "border": "#262b36",  # Separator, Rahmen
+    # Text
+    "text": "#e4e7ec",  # Primärtext (15.3:1 auf bg)
+    "muted": "#7f8694",  # Sekundärtext (5.2:1 auf bg)
     # Semantic
-    "accent": "#e8622c",  # Orange-Rot Primärfarbe
-    "accent2": "#f59e0b",  # Gold/Amber Gradient-Ende
-    "success": "#4ade80",  # wärmeres Grün
-    "danger": "#ef4444",  # Rot
-    "neutral": "#d4a574",  # Beige/Sand
+    "accent": "#f63138",  # Logo-Rot, Primary Buttons
+    "accent2": "#f63138",  # ← entfällt in Schritt 5, bis dahin = accent
+    "success": "#22c55e",  # Bestätigung
+    "danger": "#f87171",  # Destruktiv
+    "danger_filled": "#dc2626",  # Confirm-Dialog Hintergrund (ab Schritt 4)
+    "neutral": "#7f8694",  # ← entfällt in Schritt 5, bis dahin = muted
+    # Derived
+    "row_border": "#161920",  # = surface
+    "pill_neutral_border": "#3a4050",  # abgedunkeltes Border
+    "tag_compress_bg": "rgba(246,49,56,0.12)",  # accent-dim
+    "tag_copy_bg": "rgba(127,134,148,0.12)",  # muted-dim
+    "rename_arrow": "#555d6e",  # gedämpftes Grau
 }
 
 _CSS_TEMPLATE = """
@@ -136,7 +143,7 @@ body, .q-page, .nicegui-content {
 .mt-pill-info    { border-color: $accent$ !important; color: $accent$ !important; }
 .mt-pill-success { border-color: $success$ !important; color: $success$ !important; }
 .mt-pill-good    { border-color: $success$ !important; color: $success$ !important; }
-.mt-pill-neutral { border-color: #a88a6a !important; color: $neutral$ !important; }
+.mt-pill-neutral { border-color: $pill_neutral_border$ !important; color: $neutral$ !important; }
 .mt-pill-danger  { border-color: $danger$ !important; color: $danger$ !important; }
 
 /* ── Progress Bar ──────────────────────────────────────────── */
@@ -160,7 +167,7 @@ body, .q-page, .nicegui-content {
     color: $text$ !important;
     font-family: 'Menlo', 'JetBrains Mono', monospace !important;
     font-size: 12px !important;
-    border-bottom: 1px solid #1f1916 !important;
+    border-bottom: 1px solid $row_border$ !important;
 }
 .mt-table .q-table tbody tr:hover td { background: $surface2$ !important; }
 .mt-table .q-table tbody tr:last-child td { border-bottom: none !important; }
@@ -176,9 +183,9 @@ body, .q-page, .nicegui-content {
     text-transform: uppercase;
     letter-spacing: 0.04em;
 }
-.mt-tag-compress { background: #3a2218; color: $accent$; }
+.mt-tag-compress { background: $tag_compress_bg$; color: $accent$; }
 .mt-tag-skip     { background: $surface2$; color: $muted$; }
-.mt-tag-copy     { background: #2a2018; color: $neutral$; }
+.mt-tag-copy     { background: $tag_copy_bg$; color: $neutral$; }
 
 /* ── Rename Preview Rows ───────────────────────────────────── */
 .mt-rename-row {
@@ -187,13 +194,13 @@ body, .q-page, .nicegui-content {
     align-items: center;
     gap: 8px;
     padding: 6px 14px;
-    border-bottom: 1px solid #1f1916;
+    border-bottom: 1px solid $row_border$;
     font-family: 'Menlo', 'JetBrains Mono', monospace;
     font-size: 11px;
 }
 .mt-rename-row:hover { background: $surface2$; }
 .mt-rename-old { color: $muted$; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mt-rename-arrow { color: #6b5a48; }
+.mt-rename-arrow { color: $rename_arrow$; }
 .mt-rename-new { color: $success$; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ── Duplikat-Gruppen ──────────────────────────────────────── */
@@ -213,7 +220,7 @@ body, .q-page, .nicegui-content {
 }
 .mt-dupe-row {
     padding: 8px 14px;
-    border-bottom: 1px solid #1f1916;
+    border-bottom: 1px solid $row_border$;
     transition: background 0.1s;
 }
 .mt-dupe-row:hover { background: $surface2$; }
