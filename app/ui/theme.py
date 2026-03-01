@@ -252,6 +252,52 @@ body, .q-page, .nicegui-content {
 
 /* ── Focus Ring ────────────────────────────────────────────── */
 *:focus-visible { outline-color: $accent$ !important; }
+
+/* ── Flammen-Spinner ──────────────────────────────────────── */
+/* Statischer Glow auf dem Wrapper – einmal gerendert, kein Repaint */
+.mt-flame-wrap {
+    display: inline-flex;
+    align-items: center;
+    filter: drop-shadow(0 0 4px rgba(232, 98, 44, 0.55))
+            drop-shadow(0 0 9px rgba(245, 158, 11, 0.25));
+}
+
+/* Äußere Flamme: langsames Wiegen */
+@keyframes mt-flame-sway {
+    0%   { transform: scaleX(1)    scaleY(1)    translateY(0); }
+    30%  { transform: scaleX(1.05) scaleY(0.97) translateY(1px); }
+    60%  { transform: scaleX(0.95) scaleY(1.03) translateY(-1px); }
+    100% { transform: scaleX(1)    scaleY(1)    translateY(0); }
+}
+
+/* Innere Flamme: schnelles Flackern */
+@keyframes mt-flame-flicker {
+    0%   { opacity: 1;    transform: scaleY(1)    scaleX(1); }
+    25%  { opacity: 0.75; transform: scaleY(0.93) scaleX(1.05); }
+    50%  { opacity: 1;    transform: scaleY(1.06) scaleX(0.96); }
+    75%  { opacity: 0.82; transform: scaleY(0.97) scaleX(1.02); }
+    100% { opacity: 1;    transform: scaleY(1)    scaleX(1); }
+}
+
+.mt-flame-outer {
+    transform-origin: 50% 80%;
+    animation: mt-flame-sway 1.8s ease-in-out infinite;
+    will-change: transform;
+}
+
+.mt-flame-inner {
+    transform-origin: 50% 85%;
+    animation: mt-flame-flicker 0.9s ease-in-out infinite;
+    will-change: transform, opacity;
+}
+
+/* Accessibility: Reduzierte Bewegung */
+@media (prefers-reduced-motion: reduce) {
+    .mt-flame-outer, .mt-flame-inner {
+        animation: none !important;
+    }
+    .mt-flame-outer { opacity: 0.7; }
+}
 """
 
 
@@ -270,6 +316,24 @@ CSS = _build_css()
 def apply() -> None:
     """CSS in die Seite injizieren. Einmalig in main() aufrufen."""
     ui.add_head_html(f"<style>{CSS}</style>")
+
+
+def flame_spinner(size: int = 24) -> ui.html:
+    """SVG-Flammen-Spinner. Caller setzt .visible = False."""
+    svg = f"""
+    <span class="mt-flame-wrap" role="status" aria-label="Laden">
+      <svg viewBox="0 0 24 24" width="{size}" height="{size}" aria-hidden="true">
+        <path class="mt-flame-outer"
+              d="M12 2 C12 2,18 8,18 14 C18 18.4,15.3 21.5,12 22
+                 C8.7 21.5,6 18.4,6 14 C6 8,12 2,12 2Z"
+              fill="{COLORS['accent']}"/>
+        <path class="mt-flame-inner"
+              d="M12 8 C12 8,15 12,15 15.5 C15 17.5,13.7 19,12 19.5
+                 C10.3 19,9 17.5,9 15.5 C9 12,12 8,12 8Z"
+              fill="{COLORS['accent2']}"/>
+      </svg>
+    </span>"""
+    return ui.html(svg)
 
 
 def pill(text: str, variant: str = "") -> None:

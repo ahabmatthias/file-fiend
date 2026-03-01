@@ -12,6 +12,7 @@ from nicegui import ui
 
 from app.core.constants import IMAGE_EXTS, VIDEO_EXTS
 from app.core.duplicates import find_duplicates
+from app.ui import theme
 from app.ui.utils import build_ext_filter, validate_folder_path
 from app.ui.utils import short_path as _short_path
 
@@ -51,7 +52,7 @@ def build(shared: dict):
     """Baut den Duplikat-Finder-Tab – wird innerhalb eines tab_panel aufgerufen."""
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
-        spinner = ui.spinner(size="sm").classes("text-[#e8622c]")
+        spinner = theme.flame_spinner()
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
 

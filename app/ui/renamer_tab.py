@@ -28,7 +28,7 @@ def build(shared: dict):
 
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
-        spinner = ui.spinner(size="sm").classes("text-[#e8622c]")
+        spinner = theme.flame_spinner()
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
 
