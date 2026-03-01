@@ -74,14 +74,14 @@ def build(shared: dict):
 
                 recursive_cb = ui.checkbox("Mit Unterordnern")
 
-            ui.icon("info_outline").classes("text-[#4f8ef7] text-sm cursor-default").tooltip(
+            ui.icon("info_outline").classes("text-[#e8622c] text-sm cursor-default").tooltip(
                 "Hardware nutzt den Apple-Chip direkt – schnell und stromsparend. "
                 "Software encodiert in reinem Code – langsamer, minimal präziser."
             )
 
     # ── Status + Spinner ──────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-3"):
-        spinner = ui.spinner(size="sm").classes("text-[#4f8ef7]")
+        spinner = ui.spinner(size="sm").classes("text-[#e8622c]")
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
 
@@ -268,6 +268,5 @@ def build(shared: dict):
         ui.button("Komprimieren", on_click=do_execute, icon="movie")
         .classes("mt-btn-success")
         .props("no-caps")
-        .style("background-color: #34d399 !important; color: #0f1117 !important")
     )
     btn_execute.disable()

@@ -51,7 +51,7 @@ def build(shared: dict):
     """Baut den Duplikat-Finder-Tab – wird innerhalb eines tab_panel aufgerufen."""
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
-        spinner = ui.spinner(size="sm").classes("text-[#4f8ef7]")
+        spinner = ui.spinner(size="sm").classes("text-[#e8622c]")
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
 
@@ -138,7 +138,7 @@ def build(shared: dict):
                                 # Vorschau
                                 if url:
                                     ui.image(url).classes("w-16 h-16 object-cover rounded").style(
-                                        "border: 1px solid #2a3147;"
+                                        "border: 1px solid #3d332c;"
                                     )
                                 else:
                                     with (
@@ -146,10 +146,10 @@ def build(shared: dict):
                                         .classes(
                                             "w-16 h-16 flex items-center justify-center rounded"
                                         )
-                                        .style("background: #1e2535; border: 1px solid #2a3147;")
+                                        .style("background: #2e2722; border: 1px solid #3d332c;")
                                     ):
                                         ui.icon(_file_icon(path), size="1.5rem").classes(
-                                            "text-[#64748b]"
+                                            "text-[#8b7355]"
                                         )
 
                                 # Info + Checkbox
@@ -195,7 +195,7 @@ def build(shared: dict):
 
         with ui.dialog() as dialog, ui.card().classes("mt-card"):
             ui.label(f"{len(to_delete)} Datei(en) endgültig löschen?").classes(
-                "font-semibold text-[#e2e8f0]"
+                "font-semibold text-[#f0ebe5]"
             )
             ui.label("Diese Aktion kann nicht rückgängig gemacht werden.").classes("mt-hint")
             with ui.row().classes("w-full justify-end gap-2 mt-2"):
@@ -211,7 +211,5 @@ def build(shared: dict):
         "Ausgewählte löschen",
         on_click=do_delete,
         icon="delete",
-    ).classes("mt-btn-success").props("no-caps").style(
-        "background-color: #34d399 !important; color: #0f1117 !important"
-    )
+    ).classes("mt-btn-success").props("no-caps")
     ui.label("Tipp: Vorher Backup erstellen!").classes("mt-hint mt-1")

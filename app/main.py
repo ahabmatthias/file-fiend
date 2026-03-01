@@ -25,9 +25,9 @@ from app.ui.utils import pick_folder  # noqa: E402
 def index():
     theme.apply()
 
-    with ui.header().classes("bg-[#161b27] border-b border-[#2a3147] px-5 py-2"):
+    with ui.header().classes("mt-header"):
         with ui.row().classes("items-center gap-3 w-full"):
-            ui.icon("folder_open").classes("text-[#4f8ef7] text-base")
+            ui.icon("folder_open").classes("text-[#e8622c] text-base")
             shared_input = (
                 ui.input(
                     placeholder="/Users/du/Bilder",
