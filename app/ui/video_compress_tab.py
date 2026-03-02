@@ -44,7 +44,7 @@ def build(shared: dict):
                         target_input.set_value(result)
 
                 ui.button("Ordner wählen", on_click=on_pick_target, icon="folder_open").classes(
-                    "mt-btn-ghost"
+                    "mt-btn-primary"
                 ).props("flat no-caps")
 
             # Reaktives Auto-Fill: Zielordner wird gesetzt sobald Quellordner gewählt wird

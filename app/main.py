@@ -57,7 +57,7 @@ def index():
                     shared_input.set_value(result)
                     _notify_folder_change(result)
 
-            ui.button("Ordner wählen", on_click=on_pick_shared).classes("mt-btn-ghost").props(
+            ui.button("Ordner wählen", on_click=on_pick_shared).classes("mt-btn-primary").props(
                 "no-caps"
             )
 
