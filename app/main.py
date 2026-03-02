@@ -39,7 +39,7 @@ def index():
                     placeholder="/Users/du/Bilder",
                 )
                 .classes("flex-1")
-                .props("outlined dense")
+                .props('outlined dense input-style="direction:rtl;text-align:left"')
             )
 
             shared_input.on(

@@ -35,7 +35,7 @@ def build(shared: dict):
                         placeholder="/Users/du/Videos_compressed",
                     )
                     .classes("flex-1")
-                    .props("outlined dense")
+                    .props('outlined dense input-style="direction:rtl;text-align:left"')
                 )
 
                 async def on_pick_target():
@@ -45,7 +45,7 @@ def build(shared: dict):
 
                 ui.button("Ordner wählen", on_click=on_pick_target, icon="folder_open").classes(
                     "mt-btn-primary"
-                ).props("flat no-caps")
+                ).props("no-caps")
 
             # Reaktives Auto-Fill: Zielordner wird gesetzt sobald Quellordner gewählt wird
             def _auto_fill_target(folder: str):
