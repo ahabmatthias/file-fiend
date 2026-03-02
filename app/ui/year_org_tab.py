@@ -23,7 +23,7 @@ def build(shared: dict):
         cb_videos = ui.checkbox("Videos", value=True)
     ui.separator()
     with ui.row().classes("items-center gap-2 mt-1"):
-        camera_checkbox = ui.checkbox("Nach Kamera sortieren")
+        camera_checkbox = ui.checkbox("Zusätzlich nach Kamera ordnen")
         ui.icon("info_outline").classes("text-[#f63138] text-sm cursor-default").tooltip(
             "Kamera-Erkennung liest EXIF Make/Model aus den Dateien. "
             "Dateien ohne EXIF landen im Ordner 'Sonstige'."

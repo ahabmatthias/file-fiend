@@ -71,8 +71,8 @@ def index():
     with ui.tabs().classes("w-full") as tabs:
         tab_dupes = ui.tab("Duplikate", icon="content_copy")
         tab_rename = ui.tab("Umbenennen", icon="drive_file_rename_outline")
-        tab_year = ui.tab("Sortieren", icon="layers")
-        tab_video = ui.tab("Video", icon="movie")
+        tab_year = ui.tab("Ordnen", icon="layers")
+        tab_video = ui.tab("Komprimieren", icon="movie")
 
     with ui.tab_panels(tabs, value=tab_dupes).classes("w-full"):
         with ui.tab_panel(tab_dupes):
