@@ -34,7 +34,7 @@ def build(shared: dict):
 
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
-        spinner = theme.flame_spinner()
+        spinner = theme.ember_spinner()
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
 
@@ -88,17 +88,25 @@ def build(shared: dict):
         btn_execute.disable()
         progress_bar.set_value(0)
         progress_bar.visible = True
+        await asyncio.sleep(0)
 
         from app.core.year_org import scan_folder  # noqa: PLC0415
 
         loop = asyncio.get_event_loop()
+        _last_scan = [0.0]
 
         async def _update_scan_progress(value: float):
             progress_bar.set_value(value)
             status_label.set_text(f"Scanne … {int(value * 100)} %")
 
         def scan_progress_cb(done, total):
+            import time
+
             if total > 0:
+                now = time.monotonic()
+                if now - _last_scan[0] < 0.1 and done < total:
+                    return
+                _last_scan[0] = now
                 asyncio.run_coroutine_threadsafe(_update_scan_progress(done / total), loop)
 
         recursive = cb_recursive.value
@@ -220,6 +228,7 @@ def build(shared: dict):
         pills_row.visible = False
         progress_bar.set_value(0)
         progress_bar.visible = True
+        await asyncio.sleep(0)
 
         from app.core.year_org import execute_organization  # noqa: PLC0415
 
@@ -227,13 +236,20 @@ def build(shared: dict):
         exts = _state["extensions"]
         recursive = _state.get("recursive", True)
         loop = asyncio.get_event_loop()
+        _last_exec = [0.0]
 
         async def _update_exec_progress(value: float):
             progress_bar.set_value(value)
             status_label.set_text(f"Organisiere … {int(value * 100)} %")
 
         def exec_progress_cb(done, total):
+            import time
+
             if total > 0:
+                now = time.monotonic()
+                if now - _last_exec[0] < 0.1 and done < total:
+                    return
+                _last_exec[0] = now
                 asyncio.run_coroutine_threadsafe(_update_exec_progress(done / total), loop)
 
         result = await loop.run_in_executor(

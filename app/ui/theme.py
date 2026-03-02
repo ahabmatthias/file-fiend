@@ -19,11 +19,9 @@ COLORS = {
     "muted": "#7f8694",  # Sekundärtext (5.2:1 auf bg)
     # Semantic
     "accent": "#f63138",  # Logo-Rot, Primary Buttons
-    "accent2": "#f63138",  # ← entfällt in Schritt 5, bis dahin = accent
     "success": "#22c55e",  # Bestätigung
     "danger": "#f87171",  # Destruktiv
-    "danger_filled": "#dc2626",  # Confirm-Dialog Hintergrund (ab Schritt 4)
-    "neutral": "#7f8694",  # ← entfällt in Schritt 5, bis dahin = muted
+    "danger_filled": "#dc2626",  # Confirm-Dialog Hintergrund
     # Derived
     "row_border": "#161920",  # = surface
     "pill_neutral_border": "#3a4050",  # abgedunkeltes Border
@@ -156,13 +154,14 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 .mt-pill-info    { border-color: $accent$ !important; color: $accent$ !important; }
 .mt-pill-success { border-color: $success$ !important; color: $success$ !important; }
 .mt-pill-good    { border-color: $success$ !important; color: $success$ !important; }
-.mt-pill-neutral { border-color: $pill_neutral_border$ !important; color: $neutral$ !important; }
+.mt-pill-neutral { border-color: $pill_neutral_border$ !important; color: $muted$ !important; }
 .mt-pill-danger  { border-color: $danger$ !important; color: $danger$ !important; }
 
 /* ── Progress Bar ──────────────────────────────────────────── */
 .mt-progress .q-linear-progress__track { background: $surface2$ !important; }
 .mt-progress .q-linear-progress__model {
-    background: linear-gradient(90deg, $accent$, $accent2$) !important;
+    background: $accent$ !important;
+    transition: none !important;
 }
 
 /* ── Tables ────────────────────────────────────────────────── */
@@ -198,7 +197,7 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 }
 .mt-tag-compress { background: $tag_compress_bg$; color: $accent$; }
 .mt-tag-skip     { background: $surface2$; color: $muted$; }
-.mt-tag-copy     { background: $tag_copy_bg$; color: $neutral$; }
+.mt-tag-copy     { background: $tag_copy_bg$; color: $muted$; }
 
 /* ── Rename Preview Rows ───────────────────────────────────── */
 .mt-rename-row {
@@ -273,50 +272,34 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 /* ── Focus Ring ────────────────────────────────────────────── */
 *:focus-visible { outline-color: $accent$ !important; }
 
-/* ── Flammen-Spinner ──────────────────────────────────────── */
-/* Statischer Glow auf dem Wrapper – einmal gerendert, kein Repaint */
-.mt-flame-wrap {
-    display: inline-flex;
-    align-items: center;
-    filter: drop-shadow(0 0 4px rgba(232, 98, 44, 0.55))
-            drop-shadow(0 0 9px rgba(245, 158, 11, 0.25));
+/* ── Glut-Ring-Spinner ─────────────────────────────────────── */
+.mt-ember-spinner {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    vertical-align: middle;
+    flex-shrink: 0;
 }
 
-/* Äußere Flamme: langsames Wiegen */
-@keyframes mt-flame-sway {
-    0%   { transform: scaleX(1)    scaleY(1)    translateY(0); }
-    30%  { transform: scaleX(1.05) scaleY(0.97) translateY(1px); }
-    60%  { transform: scaleX(0.95) scaleY(1.03) translateY(-1px); }
-    100% { transform: scaleX(1)    scaleY(1)    translateY(0); }
-}
-
-/* Innere Flamme: schnelles Flackern */
-@keyframes mt-flame-flicker {
-    0%   { opacity: 1;    transform: scaleY(1)    scaleX(1); }
-    25%  { opacity: 0.75; transform: scaleY(0.93) scaleX(1.05); }
-    50%  { opacity: 1;    transform: scaleY(1.06) scaleX(0.96); }
-    75%  { opacity: 0.82; transform: scaleY(0.97) scaleX(1.02); }
-    100% { opacity: 1;    transform: scaleY(1)    scaleX(1); }
-}
-
-.mt-flame-outer {
-    transform-origin: 50% 80%;
-    animation: mt-flame-sway 1.8s ease-in-out infinite;
+.mt-ember-ring {
+    display: block;
+    width: 22px;
+    height: 22px;
+    box-sizing: border-box;
+    border: 2px solid rgba(246, 49, 56, 0.15);
+    border-top-color: $accent$;
+    border-radius: 50%;
+    box-shadow: 0 0 6px rgba(246, 49, 56, 0.35);
+    animation: mt-ember-spin 0.8s linear infinite;
     will-change: transform;
 }
 
-.mt-flame-inner {
-    transform-origin: 50% 85%;
-    animation: mt-flame-flicker 0.9s ease-in-out infinite;
-    will-change: transform, opacity;
+@keyframes mt-ember-spin {
+    to { transform: rotate(360deg); }
 }
 
-/* Accessibility: Reduzierte Bewegung */
 @media (prefers-reduced-motion: reduce) {
-    .mt-flame-outer, .mt-flame-inner {
-        animation: none !important;
-    }
-    .mt-flame-outer { opacity: 0.7; }
+    .mt-ember-ring { animation: none !important; opacity: 0.6; }
 }
 """
 
@@ -344,22 +327,11 @@ def apply() -> None:
     ui.add_head_html(f"<style>{CSS}</style>")
 
 
-def flame_spinner(size: int = 24) -> ui.html:
-    """SVG-Flammen-Spinner. Caller setzt .visible = False."""
-    svg = f"""
-    <span class="mt-flame-wrap" role="status" aria-label="Laden">
-      <svg viewBox="0 0 24 24" width="{size}" height="{size}" aria-hidden="true">
-        <path class="mt-flame-outer"
-              d="M12 2 C12 2,18 8,18 14 C18 18.4,15.3 21.5,12 22
-                 C8.7 21.5,6 18.4,6 14 C6 8,12 2,12 2Z"
-              fill="{COLORS['accent']}"/>
-        <path class="mt-flame-inner"
-              d="M12 8 C12 8,15 12,15 15.5 C15 17.5,13.7 19,12 19.5
-                 C10.3 19,9 17.5,9 15.5 C9 12,12 8,12 8Z"
-              fill="{COLORS['accent2']}"/>
-      </svg>
-    </span>"""
-    return ui.html(svg)
+def ember_spinner() -> ui.element:
+    """Glut-Ring-Spinner. Caller setzt .visible = False."""
+    with ui.element("span").classes("mt-ember-spinner") as wrap:
+        ui.element("span").classes("mt-ember-ring")
+    return wrap
 
 
 def pill(text: str, variant: str = "") -> None:

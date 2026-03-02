@@ -233,13 +233,14 @@ Jeder Schritt ist ein eigener Commit. Nach jedem Schritt: App starten, visuell p
 2. ~~**Neue Farbwerte** in `COLORS` eintragen
    → App sieht jetzt anders aus. Visuell prüfen: Surfaces, Text, Akzentfarbe.~~ ✅
 
-3. **Inline-Farben** in allen Tab-Dateien ersetzen (Tabelle oben)
-   → Kein Blau/Lila mehr irgendwo.
+3. ~~**Inline-Farben** in allen Tab-Dateien ersetzen (Tabelle oben)
+   → Kein Blau/Lila mehr irgendwo.~~ ✅
 
-4. **Button-Stil** anpassen: Danger-Buttons auf Outline umstellen
-   → Success-Button `.style()`-Overrides entfernen und testen.
+4. ~~**Button-Stil** anpassen: Danger-Buttons auf Outline umstellen
+   → Success-Button `.style()`-Overrides entfernen und testen.~~ ✅
 
-5. **Spinner** ersetzen: `ember_spinner()` Helper + CSS + 4 Aufrufstellen
+5. ~~**Spinner** ersetzen: `ember_spinner()` Helper + CSS + 4 Aufrufstellen
+   → Glut-Ring via `ui.element()` (nicht `ui.html()`), Progress-Bar `transition: none`.~~ ✅
 
 6. **Header-Umbau**: "Mit Unterordnern" hochziehen, aus den Tabs entfernen
 

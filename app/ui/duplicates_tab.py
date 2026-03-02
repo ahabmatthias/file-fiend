@@ -52,7 +52,7 @@ def build(shared: dict):
     """Baut den Duplikat-Finder-Tab – wird innerhalb eines tab_panel aufgerufen."""
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
-        spinner = theme.flame_spinner()
+        spinner = theme.ember_spinner()
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
 
@@ -92,15 +92,23 @@ def build(shared: dict):
         checkboxes.clear()
         progress_bar.set_value(0)
         progress_bar.visible = True
+        await asyncio.sleep(0)  # flush: Browser erhält spinner + progress sofort
 
         loop = asyncio.get_event_loop()
+        _last_update = [0.0]  # Zeitstempel für Throttle
 
         async def _update_progress(value: float):
             progress_bar.set_value(value)
             status_label.set_text(f"Scanne … {int(value * 100)} %")
 
         def progress_cb(done, total):
+            import time
+
             if total > 0:
+                now = time.monotonic()
+                if now - _last_update[0] < 0.1 and done < total:
+                    return  # max. 10 Updates/s, letztes Update immer durchlassen
+                _last_update[0] = now
                 asyncio.run_coroutine_threadsafe(_update_progress(done / total), loop)
 
         recursive = cb_recursive.value

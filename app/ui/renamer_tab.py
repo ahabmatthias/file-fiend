@@ -28,7 +28,7 @@ def build(shared: dict):
 
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
-        spinner = theme.flame_spinner()
+        spinner = theme.ember_spinner()
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
 
@@ -75,6 +75,7 @@ def build(shared: dict):
         _state["files"] = None
         _state["has_preview"] = False
         btn_rename.disable()
+        await asyncio.sleep(0)
 
         from app.core.renamer import collect_files, process_files  # noqa: PLC0415
 
@@ -135,6 +136,7 @@ def build(shared: dict):
         btn_rename.disable()
         preview_col.clear()
         pills_row.visible = False
+        await asyncio.sleep(0)
 
         from app.core.renamer import process_files  # noqa: PLC0415
 
