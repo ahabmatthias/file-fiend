@@ -253,6 +253,28 @@ Jeder Schritt ist ein eigener Commit. Nach jedem Schritt: App starten, visuell p
 
 9. **Ladebildschirm** (optional, separates Feature)
 
+10. **Komprimieren-Tab: Layout + Info-Icon**
+    - Info-Icon (`info_outline`) von eigener Zeile in die Codec-Row verschieben
+      (inline neben Codec-Select, wie Kamera-Checkbox im Ordnen-Tab)
+    - Optionen-Card volle Breite prüfen/sicherstellen
+
+11. **Success-Button-Farbe überarbeiten**
+    - Aktuell `#22c55e` (warmes Grün) – clasht mit kalter Palette
+    - Alternative Vorschläge erarbeiten und mit User abstimmen
+    - Betrifft: `COLORS["success"]` in `theme.py`, alle `mt-btn-success` Buttons
+    - Kandidaten: kälteres Grün, Teal, oder komplett anderer Ansatz
+
+12. **Komprimieren-Tab: Fehlermeldungen anzeigen + kategorisieren**
+    - **Bug:** `compress_files()` sammelt Fehler in `errors`-Liste, aber die UI
+      zeigt sie nie an – nur die Pill-Zähler. Fix: Error-Details nach Komprimierung
+      rendern (analog `renamer_tab.py:153–164`).
+    - **UX:** Rohe ffmpeg-stderr-Meldungen sind kryptisch. Gängige Fehler erkennen
+      und menschenlesbar übersetzen, z.B.:
+      - Codec nicht unterstützt → "Hardware-Encoder nicht verfügbar, Software-Codec nutzen"
+      - Permission denied → "Keine Schreibrechte im Zielordner"
+      - Datei-Korrupt / kein Video-Stream → "Datei konnte nicht gelesen werden"
+    - Testdateien: `test_files/Film Files/` (DJI-Drohnenvideos, ~180 MB + ~144 MB)
+
 ---
 
 ## Referenz-Mockup
