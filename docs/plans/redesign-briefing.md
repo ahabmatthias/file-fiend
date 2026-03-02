@@ -242,12 +242,14 @@ Jeder Schritt ist ein eigener Commit. Nach jedem Schritt: App starten, visuell p
 5. ~~**Spinner** ersetzen: `ember_spinner()` Helper + CSS + 4 Aufrufstellen
    → Glut-Ring via `ui.element()` (nicht `ui.html()`), Progress-Bar `transition: none`.~~ ✅
 
-6. **Header-Umbau**: "Mit Unterordnern" hochziehen, aus den Tabs entfernen
+6. ~~**Header-Umbau**: "Mit Unterordnern" hochziehen, aus den Tabs entfernen
+   → Globale Checkbox in Header-Sub-Row, reaktives Auto-Fill für Zielordner.~~ ✅
 
-7. **Tab-Namen** ändern: Sortieren → Ordnen, Video → Komprimieren,
-   Checkbox "Nach Kamera sortieren" → "Zusätzlich nach Kamera ordnen"
+7. ~~**Tab-Namen** ändern: Sortieren → Ordnen, Video → Komprimieren,
+   Checkbox "Nach Kamera sortieren" → "Zusätzlich nach Kamera ordnen"~~ ✅
 
-8. **Visueller Gesamtcheck** aller Tabs und Zustände
+8. ~~**Visueller Gesamtcheck** aller Tabs und Zustände
+   → "Ordner wählen" auf accent-primary, flat-Prop-Bug gefixt, RTL-Pfadanzeige.~~ ✅
 
 9. **Ladebildschirm** (optional, separates Feature)
 
