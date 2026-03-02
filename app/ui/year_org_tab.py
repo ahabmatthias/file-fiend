@@ -19,9 +19,6 @@ def build(shared: dict):
     """Baut den Jahr-Organisations-Tab – wird innerhalb eines tab_panel aufgerufen."""
     # ── Optionen ────────────────────────────────────────────────────
     with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
-        cb_recursive = ui.checkbox("Mit Unterordnern", value=True)
-    ui.separator()
-    with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
         cb_fotos = ui.checkbox("Fotos", value=True)
         cb_videos = ui.checkbox("Videos", value=True)
     ui.separator()
@@ -46,7 +43,7 @@ def build(shared: dict):
     pills_row.visible = False
 
     preview_col = ui.column().classes("w-full gap-0 mt-2")
-    _state: dict = {"scan": None, "folder": None, "extensions": None, "recursive": True}
+    _state: dict = {"scan": None, "folder": None, "extensions": None}
 
     def _show_pills(years: int, invalid: int, conflicts: int):
         pills_row.clear()
@@ -109,7 +106,7 @@ def build(shared: dict):
                 _last_scan[0] = now
                 asyncio.run_coroutine_threadsafe(_update_scan_progress(done / total), loop)
 
-        recursive = cb_recursive.value
+        recursive = shared.get("recursive", True)
         result = await loop.run_in_executor(
             _executor,
             lambda: scan_folder(
@@ -131,7 +128,6 @@ def build(shared: dict):
         _state["scan"] = result
         _state["folder"] = folder
         _state["extensions"] = exts
-        _state["recursive"] = recursive
 
         status_label.set_text(f"{result['total_files']} Dateien gefunden")
         _show_pills(
@@ -234,7 +230,7 @@ def build(shared: dict):
 
         group_by_camera = _state["scan"].get("group_by_camera", False)
         exts = _state["extensions"]
-        recursive = _state.get("recursive", True)
+        recursive = shared.get("recursive", True)
         loop = asyncio.get_event_loop()
         _last_exec = [0.0]
 

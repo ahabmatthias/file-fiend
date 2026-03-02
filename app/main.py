@@ -25,6 +25,12 @@ from app.ui.utils import pick_folder  # noqa: E402
 def index():
     theme.apply()
 
+    shared: dict = {"folder": "", "recursive": True, "_on_folder_change": []}
+
+    def _notify_folder_change(folder: str):
+        for cb in shared.get("_on_folder_change", []):
+            cb(folder)
+
     with ui.header().classes("mt-header"):
         with ui.row().classes("items-center gap-3 w-full"):
             ui.icon("folder_open").classes("text-[#f63138] text-base")
@@ -36,17 +42,30 @@ def index():
                 .props("outlined dense")
             )
 
-            shared: dict = {"folder": ""}
-            shared_input.on("change", lambda e: shared.update({"folder": e.value}))
+            shared_input.on(
+                "change",
+                lambda e: (
+                    shared.update({"folder": e.value}),
+                    _notify_folder_change(e.value),
+                ),
+            )
 
             async def on_pick_shared():
                 result = await pick_folder()
                 if result:
                     shared["folder"] = result
                     shared_input.set_value(result)
+                    _notify_folder_change(result)
 
             ui.button("Ordner wählen", on_click=on_pick_shared).classes("mt-btn-ghost").props(
                 "no-caps"
+            )
+
+        with ui.row().classes("mt-header-sub items-center gap-2 w-full"):
+            ui.checkbox(
+                "Mit Unterordnern",
+                value=True,
+                on_change=lambda e: shared.update({"recursive": e.value}),
             )
 
     with ui.tabs().classes("w-full") as tabs:

@@ -20,9 +20,6 @@ _executor = ThreadPoolExecutor(max_workers=1)
 def build(shared: dict):
     """Baut den Media-Renamer-Tab – wird innerhalb eines tab_panel aufgerufen."""
     with ui.row().classes("items-center gap-4 flex-wrap"):
-        cb_recursive = ui.checkbox("Mit Unterordnern", value=True)
-    ui.separator()
-    with ui.row().classes("items-center gap-4 flex-wrap"):
         cb_fotos = ui.checkbox("Fotos", value=True)
         cb_videos = ui.checkbox("Videos", value=True)
 
@@ -80,7 +77,7 @@ def build(shared: dict):
         from app.core.renamer import collect_files, process_files  # noqa: PLC0415
 
         loop = asyncio.get_event_loop()
-        recursive = cb_recursive.value
+        recursive = shared.get("recursive", True)
         files = await loop.run_in_executor(
             _executor, lambda: collect_files(folder, recursive=recursive, extensions=exts)
         )

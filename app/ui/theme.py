@@ -62,6 +62,13 @@ body, .q-page, .nicegui-content {
     padding: 10px 20px;
 }
 
+/* ── Header Sub-Row (Mit Unterordnern) ────────────────────── */
+.mt-header-sub {
+    border-top: 1px solid $border$;
+    padding: 6px 20px !important;
+    min-height: auto !important;
+}
+
 /* ── Tabs ──────────────────────────────────────────────────── */
 .q-tabs { background: $surface$ !important; border-bottom: 1px solid $border$; }
 .q-tab  { color: $muted$ !important; font-size: 12px !important; font-weight: 500 !important; }

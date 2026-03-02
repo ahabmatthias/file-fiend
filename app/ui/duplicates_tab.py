@@ -64,9 +64,6 @@ def build(shared: dict):
 
     # ── Optionen ───────────────────────────────────────────────────
     with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
-        cb_recursive = ui.checkbox("Mit Unterordnern", value=True)
-    ui.separator()
-    with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
         cb_fotos = ui.checkbox("Fotos", value=True)
         cb_videos = ui.checkbox("Videos", value=True)
         cb_audio = ui.checkbox("Audio", value=False)
@@ -111,7 +108,7 @@ def build(shared: dict):
                 _last_update[0] = now
                 asyncio.run_coroutine_threadsafe(_update_progress(done / total), loop)
 
-        recursive = cb_recursive.value
+        recursive = shared.get("recursive", True)
         dupes = await loop.run_in_executor(
             _executor,
             lambda: find_duplicates(folder, progress_cb, extensions=exts, recursive=recursive),

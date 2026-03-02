@@ -47,10 +47,12 @@ def build(shared: dict):
                     "mt-btn-ghost"
                 ).props("flat no-caps")
 
-            # Auto-Fill Zielordner aus Quellordner
-            src = (shared.get("folder") or "").strip()
-            if src and not target_input.value:
-                target_input.set_value(src + "_compressed")
+            # Reaktives Auto-Fill: Zielordner wird gesetzt sobald Quellordner gewählt wird
+            def _auto_fill_target(folder: str):
+                if folder and not target_input.value.strip():
+                    target_input.set_value(folder + "_compressed")
+
+            shared.setdefault("_on_folder_change", []).append(_auto_fill_target)
 
             with ui.row().classes("items-center gap-4"):
                 codec_select = (
@@ -71,8 +73,6 @@ def build(shared: dict):
                     .classes("w-32")
                     .props("outlined dense")
                 )
-
-                recursive_cb = ui.checkbox("Mit Unterordnern")
 
             ui.icon("info_outline").classes("text-[#f63138] text-sm cursor-default").tooltip(
                 "Hardware nutzt den Apple-Chip direkt – schnell und stromsparend. "
@@ -134,7 +134,7 @@ def build(shared: dict):
         from app.core.video_compress import preview_compression  # noqa: PLC0415
 
         config = {
-            "recursive": recursive_cb.value,
+            "recursive": shared.get("recursive", True),
             "min_size_mb": float(min_size_input.value or 30.0),
             "codec": codec_select.value,
         }
