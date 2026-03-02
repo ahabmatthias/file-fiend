@@ -19,7 +19,7 @@ COLORS = {
     "muted": "#7f8694",  # Sekundärtext (5.2:1 auf bg)
     # Semantic
     "accent": "#f63138",  # Logo-Rot, Primary Buttons
-    "success": "#22c55e",  # Bestätigung
+    "success": "#10b981",  # Bestätigung (Emerald – kühler als altes Grün)
     "danger": "#f87171",  # Destruktiv
     "danger_filled": "#dc2626",  # Confirm-Dialog Hintergrund
     # Derived

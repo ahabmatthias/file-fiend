@@ -143,6 +143,36 @@ def should_skip_copy(
     return False, ""
 
 
+def categorize_error(stderr: str) -> str:
+    """Translate raw ffmpeg stderr into a human-readable message."""
+    s = stderr.lower()
+    if "no such file or directory" in s:
+        return "Datei nicht gefunden"
+    if "permission denied" in s:
+        return "Keine Schreibrechte im Zielordner"
+    if "encoder" in s and ("not found" in s or "unknown" in s or "not available" in s):
+        return "Hardware-Encoder nicht verfügbar – Software-Codec nutzen"
+    if "videotoolbox" in s and ("error" in s or "failed" in s or "init" in s):
+        return "Hardware-Encoder nicht verfügbar – Software-Codec nutzen"
+    if "invalid data" in s or "corrupt" in s or "error while decoding" in s:
+        return "Datei konnte nicht gelesen werden (möglicherweise beschädigt)"
+    if "no video stream" in s or "does not contain any stream" in s:
+        return "Kein Video-Stream in der Datei gefunden"
+    if "already exists" in s:
+        return "Zieldatei existiert bereits"
+    if "no space left" in s:
+        return "Kein Speicherplatz auf dem Zielgerät"
+    if "moov atom not found" in s:
+        return "Datei ist unvollständig oder abgebrochen"
+    # Fallback: last meaningful line
+    lines = stderr.strip().splitlines()
+    for line in reversed(lines):
+        stripped = line.strip()
+        if stripped and not stripped.startswith("frame="):
+            return stripped[:120]
+    return stderr.strip()[:120] if stderr.strip() else "Unbekannter Fehler"
+
+
 def build_ffmpeg_cmd(
     src: Path,
     dst: Path,
@@ -315,7 +345,9 @@ def compress_files(
     files = collect_files(source_path, recursive)
     total = len(files)
     compressed = skipped = failed = 0
+    hw_fallbacks = 0
     errors: list[str] = []
+    error_details: list[dict] = []
 
     for idx, src in enumerate(files, 1):
         if progress_cb:
@@ -350,7 +382,9 @@ def compress_files(
                     skipped += 1
                 except Exception as e:
                     failed += 1
-                    errors.append(f"{src.name}: {e}")
+                    msg = categorize_error(str(e))
+                    errors.append(f"{src.name}: {msg}")
+                    error_details.append({"file": src.name, "error": msg})
             else:
                 skipped += 1
             continue
@@ -363,10 +397,34 @@ def compress_files(
             if proc.returncode == 0 and dst_encoded.exists():
                 compressed += 1
             else:
+                # Auto-fallback: retry with software codec if hardware failed
+                hw_failed = video_codec == "hevc_videotoolbox"
+                if hw_failed:
+                    try:
+                        if dst_encoded.exists():
+                            dst_encoded.unlink()
+                    except Exception:
+                        pass
+                    cmd_sw = build_ffmpeg_cmd(
+                        src,
+                        dst_encoded,
+                        "libx265",
+                        target_bitrate,
+                        cfg.audio_bitrate,
+                        cfg.copy_audio,
+                    )
+                    proc_sw = subprocess.run(cmd_sw, capture_output=True, text=True)
+                    if proc_sw.returncode == 0 and dst_encoded.exists():
+                        compressed += 1
+                        hw_fallbacks += 1
+                        continue
+                    # Both failed – report the software error (more informative)
+                    proc = proc_sw
+
                 failed += 1
-                stderr_lines = (proc.stderr or "").strip().splitlines()
-                err_preview = " ".join(stderr_lines[-3:])[:200]
-                errors.append(f"{src.name}: {err_preview}")
+                msg = categorize_error(proc.stderr or "")
+                errors.append(f"{src.name}: {msg}")
+                error_details.append({"file": src.name, "error": msg})
                 try:
                     if dst_encoded.exists():
                         dst_encoded.unlink()
@@ -374,6 +432,15 @@ def compress_files(
                     pass
         except Exception as e:
             failed += 1
-            errors.append(f"{src.name}: {e}")
+            msg = categorize_error(str(e))
+            errors.append(f"{src.name}: {msg}")
+            error_details.append({"file": src.name, "error": msg})
 
-    return {"compressed": compressed, "skipped": skipped, "failed": failed, "errors": errors}
+    return {
+        "compressed": compressed,
+        "skipped": skipped,
+        "failed": failed,
+        "hw_fallbacks": hw_fallbacks,
+        "errors": errors,
+        "error_details": error_details,
+    }

@@ -25,7 +25,7 @@ _ACTION_TAG = {
 def build(shared: dict):
     """Baut den Video-Komprimierungs-Tab – wird innerhalb eines tab_panel aufgerufen."""
     # ── Optionen ──────────────────────────────────────────────────
-    with ui.element("div").classes("mt-card"):
+    with ui.element("div").classes("mt-card w-full"):
         ui.html('<div class="mt-card-header">Optionen</div>')
         with ui.column().classes("w-full gap-2 p-3"):
             with ui.row().classes("w-full items-center gap-2"):
@@ -67,17 +67,16 @@ def build(shared: dict):
                     .classes("w-52")
                     .props("outlined dense")
                 )
+                ui.icon("info_outline").classes("text-[#f63138] text-sm cursor-default").tooltip(
+                    "Hardware nutzt den Apple-Chip direkt – schnell und stromsparend. "
+                    "Software encodiert in reinem Code – langsamer, minimal präziser."
+                )
 
                 min_size_input = (
                     ui.number(label="Min-Größe (MB)", value=30.0, min=0, step=5)
                     .classes("w-32")
                     .props("outlined dense")
                 )
-
-            ui.icon("info_outline").classes("text-[#f63138] text-sm cursor-default").tooltip(
-                "Hardware nutzt den Apple-Chip direkt – schnell und stromsparend. "
-                "Software encodiert in reinem Code – langsamer, minimal präziser."
-            )
 
     # ── Status + Spinner ──────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-3"):
@@ -261,10 +260,25 @@ def build(shared: dict):
         with pills_row:
             if result["compressed"]:
                 theme.pill(f"{result['compressed']} komprimiert", "good")
+            if result.get("hw_fallbacks"):
+                theme.pill(f"{result['hw_fallbacks']}× Software-Fallback", "neutral")
             if result["skipped"]:
                 theme.pill(f"{result['skipped']} übersprungen", "")
             if result["failed"]:
                 theme.pill(f"{result['failed']} Fehler", "danger")
+
+        if result.get("error_details"):
+            with preview_col:
+                with ui.element("div").classes("mt-card w-full"):
+                    ui.html('<div class="mt-card-header">Fehler</div>')
+                    for err in result["error_details"][:20]:
+                        ui.html(
+                            f'<div class="mt-rename-row">'
+                            f'<span class="mt-rename-old">{escape(err["file"])}</span>'
+                            f'<span class="mt-rename-arrow">✕</span>'
+                            f'<span style="color:#f87171">{escape(err["error"])}</span>'
+                            f"</div>"
+                        )
 
     btn_execute = (
         ui.button("Komprimieren", on_click=do_execute, icon="movie")
