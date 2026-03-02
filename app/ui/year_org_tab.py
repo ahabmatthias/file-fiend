@@ -271,7 +271,7 @@ def build(shared: dict):
     btn_execute = (
         ui.button("Ausführen", on_click=do_execute, icon="folder_special")
         .classes("mt-btn-success")
-        .props("no-caps")
+        .props("color=positive no-caps")
     )
     btn_execute.disable()
 

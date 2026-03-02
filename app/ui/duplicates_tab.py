@@ -201,10 +201,10 @@ def build(shared: dict):
             ui.label("Diese Aktion kann nicht rückgängig gemacht werden.").classes("mt-hint")
             with ui.row().classes("w-full justify-end gap-2 mt-2"):
                 ui.button("Abbrechen", on_click=dialog.close).classes("mt-btn-ghost").props(
-                    "no-caps"
+                    "flat no-caps"
                 )
                 ui.button("Löschen", on_click=_confirm_and_delete).classes("mt-btn-danger").props(
-                    "no-caps"
+                    "flat no-caps"
                 )
         dialog.open()
 
@@ -212,5 +212,5 @@ def build(shared: dict):
         "Ausgewählte löschen",
         on_click=do_delete,
         icon="delete",
-    ).classes("mt-btn-success").props("no-caps")
+    ).classes("mt-btn-danger").props("flat no-caps")
     ui.label("Tipp: Vorher Backup erstellen!").classes("mt-hint mt-1")

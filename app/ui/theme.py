@@ -104,9 +104,13 @@ body .q-btn.mt-btn-primary:hover { filter: brightness(1.15); }
 body .q-btn.mt-btn-success { background: $success$ !important; color: $bg$ !important; }
 body .q-btn.mt-btn-success:hover { filter: brightness(1.1); }
 
-/* Danger */
-body .q-btn.mt-btn-danger { background: $danger$ !important; color: #fff !important; }
-body .q-btn.mt-btn-danger:hover { filter: brightness(1.1); }
+/* Danger – immer Outline, nie gefüllt (Unterscheidung zu Primary-Rot) */
+body .q-btn.mt-btn-danger {
+    background: transparent !important;
+    color: $danger$ !important;
+    border: 1px solid $danger$ !important;
+}
+body .q-btn.mt-btn-danger:hover { background: rgba(248,113,113,0.1) !important; }
 
 /* Ghost */
 body .q-btn.mt-btn-ghost {

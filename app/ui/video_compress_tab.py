@@ -45,7 +45,7 @@ def build(shared: dict):
 
                 ui.button("Ordner wählen", on_click=on_pick_target, icon="folder_open").classes(
                     "mt-btn-ghost"
-                ).props("no-caps")
+                ).props("flat no-caps")
 
             # Auto-Fill Zielordner aus Quellordner
             src = (shared.get("folder") or "").strip()
@@ -267,6 +267,6 @@ def build(shared: dict):
     btn_execute = (
         ui.button("Komprimieren", on_click=do_execute, icon="movie")
         .classes("mt-btn-success")
-        .props("no-caps")
+        .props("color=positive no-caps")
     )
     btn_execute.disable()

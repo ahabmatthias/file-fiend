@@ -179,11 +179,11 @@ def build(shared: dict):
             ui.label("Die Originalnamen gehen verloren.").classes("mt-hint")
             with ui.row().classes("w-full justify-end gap-2 mt-2"):
                 ui.button("Abbrechen", on_click=dialog.close).classes("mt-btn-ghost").props(
-                    "no-caps"
+                    "flat no-caps"
                 )
                 ui.button("Umbenennen", on_click=_confirm_and_rename).classes(
                     "mt-btn-success"
-                ).props("no-caps")
+                ).props("color=positive no-caps")
         dialog.open()
 
     btn_rename = (
@@ -193,7 +193,7 @@ def build(shared: dict):
             icon="drive_file_rename_outline",
         )
         .classes("mt-btn-success")
-        .props("no-caps")
+        .props("color=positive no-caps")
     )
     btn_rename.disable()
 
