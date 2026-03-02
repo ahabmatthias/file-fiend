@@ -5,6 +5,7 @@ UI-Tab: Duplikat-Finder
 import asyncio
 import os
 from concurrent.futures import ThreadPoolExecutor
+from html import escape
 from pathlib import Path
 
 from nicegui import app as nicegui_app
@@ -162,7 +163,7 @@ def build(shared: dict):
                                 with ui.column().classes("flex-1 gap-0"):
                                     cb = ui.checkbox(Path(path).name)
                                     short = _short_path(path, folder)
-                                    ui.html(f'<div class="mt-dupe-path">{short}</div>')
+                                    ui.html(f'<div class="mt-dupe-path">{escape(short)}</div>')
                                     ui.html(f'<div class="mt-dupe-path">{size_kb} KB</div>')
                                 checkboxes[cb] = path
 

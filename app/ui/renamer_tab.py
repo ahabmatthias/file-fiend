@@ -154,9 +154,9 @@ def build(shared: dict):
                     for err in results["error_details"][:20]:
                         ui.html(
                             f'<div class="mt-rename-row">'
-                            f'<span class="mt-rename-old">{err["file"]}</span>'
+                            f'<span class="mt-rename-old">{escape(str(err["file"]))}</span>'
                             f'<span class="mt-rename-arrow">✕</span>'
-                            f'<span style="color:#f87171">{err["error"]}</span>'
+                            f'<span style="color:#f87171">{escape(str(err["error"]))}</span>'
                             f"</div>"
                         )
 

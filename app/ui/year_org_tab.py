@@ -166,9 +166,9 @@ def build(shared: dict):
                         ui.html(
                             f'<div style="padding:6px 14px;'
                             f"font-family:Menlo,monospace;font-size:12px;"
-                            f'color:#e4e7ec;border-bottom:1px solid #161920;">'
-                            f'{year}/ <span style="color:#f63138;">→</span> '
-                            f'<span style="color:#22c55e;">{len(files)} Datei(en)'
+                            f'color:{theme.COLORS["text"]};border-bottom:1px solid {theme.COLORS["surface"]};">'
+                            f'{year}/ <span style="color:{theme.COLORS["accent"]};">→</span> '
+                            f'<span style="color:{theme.COLORS["success"]};">{len(files)} Datei(en)'
                             f"</span></div>"
                         )
 

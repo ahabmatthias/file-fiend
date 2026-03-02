@@ -316,7 +316,8 @@ def _build_css() -> str:
     for key, value in COLORS.items():
         css = css.replace(f"${key}$", value)
     unresolved = re.findall(r"\$\w+\$", css)
-    assert not unresolved, f"Unresolved tokens: {unresolved}"
+    if unresolved:
+        raise ValueError(f"Unresolved CSS tokens: {unresolved}")
     return css
 
 

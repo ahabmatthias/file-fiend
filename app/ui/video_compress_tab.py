@@ -4,13 +4,14 @@ UI-Tab: Video Komprimierung
 
 import asyncio
 import os
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from html import escape
 
 from nicegui import ui
 
 from app.ui import theme
-from app.ui.utils import pick_folder
+from app.ui.utils import pick_folder, validate_folder_path
 
 _executor = ThreadPoolExecutor(max_workers=1)
 
@@ -55,21 +56,34 @@ def build(shared: dict):
             shared.setdefault("_on_folder_change", []).append(_auto_fill_target)
 
             with ui.row().classes("items-center gap-4"):
+                if sys.platform == "darwin":
+                    _codec_options = {
+                        "hevc_videotoolbox": "Hardware (Default)",
+                        "libx265": "Software (gründlicher)",
+                    }
+                    _codec_default = "hevc_videotoolbox"
+                    _codec_tooltip = (
+                        "Hardware nutzt den Apple-Chip direkt – schnell und stromsparend. "
+                        "Software encodiert in reinem Code – langsamer, minimal präziser."
+                    )
+                else:
+                    _codec_options = {
+                        "libx265": "Software (Default)",
+                    }
+                    _codec_default = "libx265"
+                    _codec_tooltip = "Software-Encoder – funktioniert auf allen Systemen."
+
                 codec_select = (
                     ui.select(
                         label="Codec",
-                        options={
-                            "hevc_videotoolbox": "Hardware (Default)",
-                            "libx265": "Software (gründlicher)",
-                        },
-                        value="hevc_videotoolbox",
+                        options=_codec_options,
+                        value=_codec_default,
                     )
                     .classes("w-52")
                     .props("outlined dense")
                 )
                 ui.icon("info_outline").classes("text-[#f63138] text-sm cursor-default").tooltip(
-                    "Hardware nutzt den Apple-Chip direkt – schnell und stromsparend. "
-                    "Software encodiert in reinem Code – langsamer, minimal präziser."
+                    _codec_tooltip
                 )
 
                 min_size_input = (
@@ -115,8 +129,14 @@ def build(shared: dict):
         if not os.path.isdir(source):
             ui.notify("Quellordner nicht gefunden.", type="negative")
             return
+        if not validate_folder_path(source):
+            ui.notify("Quellordner liegt außerhalb des Home-Verzeichnisses.", type="negative")
+            return
         if not target:
             ui.notify("Bitte einen Zielordner eingeben.", type="negative")
+            return
+        if not validate_folder_path(target):
+            ui.notify("Zielordner liegt außerhalb des Home-Verzeichnisses.", type="negative")
             return
         if os.path.abspath(source) == os.path.abspath(target):
             ui.notify("Quell- und Zielordner dürfen nicht identisch sein.", type="negative")
