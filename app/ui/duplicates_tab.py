@@ -3,8 +3,10 @@ UI-Tab: Duplikat-Finder
 """
 
 import asyncio
+import hashlib
 import os
 from concurrent.futures import ThreadPoolExecutor
+from html import escape
 from pathlib import Path
 
 from nicegui import app as nicegui_app
@@ -12,6 +14,7 @@ from nicegui import ui
 
 from app.core.constants import IMAGE_EXTS, VIDEO_EXTS
 from app.core.duplicates import find_duplicates
+from app.ui import theme
 from app.ui.utils import build_ext_filter, validate_folder_path
 from app.ui.utils import short_path as _short_path
 
@@ -30,7 +33,7 @@ def _static_url(path: str) -> str | None:
     if ext not in _PREVIEW_IMAGE_EXTS:
         return None
     folder = str(p.parent)
-    route = f"/preview{abs(hash(folder)) % 100000}"
+    route = f"/preview{hashlib.md5(folder.encode()).hexdigest()[:10]}"
     if route not in _mounted_routes:
         nicegui_app.add_static_files(route, folder)
         _mounted_routes.add(route)
@@ -51,7 +54,7 @@ def build(shared: dict):
     """Baut den Duplikat-Finder-Tab – wird innerhalb eines tab_panel aufgerufen."""
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
-        spinner = ui.spinner(size="sm").classes("text-[#4f8ef7]")
+        spinner = theme.ember_spinner()
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
 
@@ -62,10 +65,7 @@ def build(shared: dict):
     checkboxes: dict = {}
 
     # ── Optionen ───────────────────────────────────────────────────
-    with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
-        cb_recursive = ui.checkbox("Mit Unterordnern", value=True)
-    ui.separator()
-    with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
+    with ui.row().classes("items-center gap-4 flex-wrap mt-1 mt-filter-cbs"):
         cb_fotos = ui.checkbox("Fotos", value=True)
         cb_videos = ui.checkbox("Videos", value=True)
         cb_audio = ui.checkbox("Audio", value=False)
@@ -91,18 +91,26 @@ def build(shared: dict):
         checkboxes.clear()
         progress_bar.set_value(0)
         progress_bar.visible = True
+        await asyncio.sleep(0)  # flush: Browser erhält spinner + progress sofort
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
+        _last_update = [0.0]  # Zeitstempel für Throttle
 
         async def _update_progress(value: float):
             progress_bar.set_value(value)
             status_label.set_text(f"Scanne … {int(value * 100)} %")
 
         def progress_cb(done, total):
+            import time
+
             if total > 0:
+                now = time.monotonic()
+                if now - _last_update[0] < 0.1 and done < total:
+                    return  # max. 10 Updates/s, letztes Update immer durchlassen
+                _last_update[0] = now
                 asyncio.run_coroutine_threadsafe(_update_progress(done / total), loop)
 
-        recursive = cb_recursive.value
+        recursive = shared.get("recursive", True)
         dupes = await loop.run_in_executor(
             _executor,
             lambda: find_duplicates(folder, progress_cb, extensions=exts, recursive=recursive),
@@ -113,6 +121,7 @@ def build(shared: dict):
 
         if not dupes:
             status_label.set_text("Keine Duplikate gefunden.")
+
             return
 
         total_files = sum(len(v) for v in dupes.values())
@@ -138,7 +147,7 @@ def build(shared: dict):
                                 # Vorschau
                                 if url:
                                     ui.image(url).classes("w-16 h-16 object-cover rounded").style(
-                                        "border: 1px solid #2a3147;"
+                                        f"border: 1px solid {theme.COLORS['border']};"
                                     )
                                 else:
                                     with (
@@ -146,17 +155,20 @@ def build(shared: dict):
                                         .classes(
                                             "w-16 h-16 flex items-center justify-center rounded"
                                         )
-                                        .style("background: #1e2535; border: 1px solid #2a3147;")
+                                        .style(
+                                            f"background: {theme.COLORS['surface2']};"
+                                            f" border: 1px solid {theme.COLORS['border']};"
+                                        )
                                     ):
                                         ui.icon(_file_icon(path), size="1.5rem").classes(
-                                            "text-[#64748b]"
+                                            f"text-[{theme.COLORS['muted']}]"
                                         )
 
                                 # Info + Checkbox
                                 with ui.column().classes("flex-1 gap-0"):
                                     cb = ui.checkbox(Path(path).name)
                                     short = _short_path(path, folder)
-                                    ui.html(f'<div class="mt-dupe-path">{short}</div>')
+                                    ui.html(f'<div class="mt-dupe-path">{escape(short)}</div>')
                                     ui.html(f'<div class="mt-dupe-path">{size_kb} KB</div>')
                                 checkboxes[cb] = path
 
@@ -195,15 +207,15 @@ def build(shared: dict):
 
         with ui.dialog() as dialog, ui.card().classes("mt-card"):
             ui.label(f"{len(to_delete)} Datei(en) endgültig löschen?").classes(
-                "font-semibold text-[#e2e8f0]"
+                f"font-semibold text-[{theme.COLORS['text']}]"
             )
             ui.label("Diese Aktion kann nicht rückgängig gemacht werden.").classes("mt-hint")
             with ui.row().classes("w-full justify-end gap-2 mt-2"):
                 ui.button("Abbrechen", on_click=dialog.close).classes("mt-btn-ghost").props(
-                    "no-caps"
+                    "flat no-caps"
                 )
                 ui.button("Löschen", on_click=_confirm_and_delete).classes("mt-btn-danger").props(
-                    "no-caps"
+                    "flat no-caps"
                 )
         dialog.open()
 
@@ -211,7 +223,5 @@ def build(shared: dict):
         "Ausgewählte löschen",
         on_click=do_delete,
         icon="delete",
-    ).classes("mt-btn-success").props("no-caps").style(
-        "background-color: #34d399 !important; color: #0f1117 !important"
-    )
+    ).classes("mt-btn-danger").props("flat no-caps")
     ui.label("Tipp: Vorher Backup erstellen!").classes("mt-hint mt-1")

@@ -19,16 +19,13 @@ _executor = ThreadPoolExecutor(max_workers=1)
 
 def build(shared: dict):
     """Baut den Media-Renamer-Tab – wird innerhalb eines tab_panel aufgerufen."""
-    with ui.row().classes("items-center gap-4 flex-wrap"):
-        cb_recursive = ui.checkbox("Mit Unterordnern", value=True)
-    ui.separator()
-    with ui.row().classes("items-center gap-4 flex-wrap"):
+    with ui.row().classes("items-center gap-4 flex-wrap mt-filter-cbs"):
         cb_fotos = ui.checkbox("Fotos", value=True)
         cb_videos = ui.checkbox("Videos", value=True)
 
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
-        spinner = ui.spinner(size="sm").classes("text-[#4f8ef7]")
+        spinner = theme.ember_spinner()
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
 
@@ -75,11 +72,12 @@ def build(shared: dict):
         _state["files"] = None
         _state["has_preview"] = False
         btn_rename.disable()
+        await asyncio.sleep(0)
 
         from app.core.renamer import collect_files, process_files  # noqa: PLC0415
 
-        loop = asyncio.get_event_loop()
-        recursive = cb_recursive.value
+        loop = asyncio.get_running_loop()
+        recursive = shared.get("recursive", True)
         files = await loop.run_in_executor(
             _executor, lambda: collect_files(folder, recursive=recursive, extensions=exts)
         )
@@ -87,6 +85,7 @@ def build(shared: dict):
         if not files:
             spinner.visible = False
             status_label.set_text("Keine Mediendateien gefunden.")
+
             return
 
         results = await loop.run_in_executor(_executor, lambda: process_files(files, dry_run=True))
@@ -135,11 +134,12 @@ def build(shared: dict):
         btn_rename.disable()
         preview_col.clear()
         pills_row.visible = False
+        await asyncio.sleep(0)
 
         from app.core.renamer import process_files  # noqa: PLC0415
 
         files = _state["files"]
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         results = await loop.run_in_executor(_executor, lambda: process_files(files, dry_run=False))
 
         spinner.visible = False
@@ -155,9 +155,9 @@ def build(shared: dict):
                     for err in results["error_details"][:20]:
                         ui.html(
                             f'<div class="mt-rename-row">'
-                            f'<span class="mt-rename-old">{err["file"]}</span>'
+                            f'<span class="mt-rename-old">{escape(str(err["file"]))}</span>'
                             f'<span class="mt-rename-arrow">✕</span>'
-                            f'<span style="color:#f87171">{err["error"]}</span>'
+                            f'<span style="color:{theme.COLORS["danger"]}">{escape(str(err["error"]))}</span>'
                             f"</div>"
                         )
 
@@ -175,15 +175,17 @@ def build(shared: dict):
             await _execute_rename()
 
         with ui.dialog() as dialog, ui.card().classes("mt-card"):
-            ui.label(f"{n_renames} Datei(en) umbenennen?").classes("font-semibold text-[#e2e8f0]")
+            ui.label(f"{n_renames} Datei(en) umbenennen?").classes(
+                f"font-semibold text-[{theme.COLORS['text']}]"
+            )
             ui.label("Die Originalnamen gehen verloren.").classes("mt-hint")
             with ui.row().classes("w-full justify-end gap-2 mt-2"):
                 ui.button("Abbrechen", on_click=dialog.close).classes("mt-btn-ghost").props(
-                    "no-caps"
+                    "flat no-caps"
                 )
                 ui.button("Umbenennen", on_click=_confirm_and_rename).classes(
                     "mt-btn-success"
-                ).props("no-caps")
+                ).props("color=positive no-caps")
         dialog.open()
 
     btn_rename = (
@@ -193,8 +195,7 @@ def build(shared: dict):
             icon="drive_file_rename_outline",
         )
         .classes("mt-btn-success")
-        .props("no-caps")
-        .style("background-color: #34d399 !important; color: #0f1117 !important")
+        .props("color=positive no-caps")
     )
     btn_rename.disable()
 

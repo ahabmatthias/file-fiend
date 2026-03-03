@@ -18,23 +18,21 @@ _executor = ThreadPoolExecutor(max_workers=1)
 def build(shared: dict):
     """Baut den Jahr-Organisations-Tab – wird innerhalb eines tab_panel aufgerufen."""
     # ── Optionen ────────────────────────────────────────────────────
-    with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
-        cb_recursive = ui.checkbox("Mit Unterordnern", value=True)
-    ui.separator()
-    with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
+    with ui.row().classes("items-center gap-4 flex-wrap mt-1 mt-filter-cbs"):
         cb_fotos = ui.checkbox("Fotos", value=True)
         cb_videos = ui.checkbox("Videos", value=True)
-    ui.separator()
     with ui.row().classes("items-center gap-2 mt-1"):
-        camera_checkbox = ui.checkbox("Nach Kamera sortieren")
-        ui.icon("info_outline").classes("text-[#4f8ef7] text-sm cursor-default").tooltip(
+        camera_checkbox = ui.checkbox("Zusätzlich nach Kamera ordnen")
+        ui.icon("info_outline").classes(
+            f"text-[{theme.COLORS['accent']}] text-sm cursor-default"
+        ).tooltip(
             "Kamera-Erkennung liest EXIF Make/Model aus den Dateien. "
             "Dateien ohne EXIF landen im Ordner 'Sonstige'."
         )
 
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
-        spinner = ui.spinner(size="sm").classes("text-[#4f8ef7]")
+        spinner = theme.ember_spinner()
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
 
@@ -46,7 +44,7 @@ def build(shared: dict):
     pills_row.visible = False
 
     preview_col = ui.column().classes("w-full gap-0 mt-2")
-    _state: dict = {"scan": None, "folder": None, "extensions": None, "recursive": True}
+    _state: dict = {"scan": None, "folder": None, "extensions": None}
 
     def _show_pills(years: int, invalid: int, conflicts: int):
         pills_row.clear()
@@ -78,6 +76,7 @@ def build(shared: dict):
             return
 
         group_by_camera = camera_checkbox.value
+
         spinner.visible = True
         status_label.set_text("Scanne …")
         preview_col.clear()
@@ -88,20 +87,28 @@ def build(shared: dict):
         btn_execute.disable()
         progress_bar.set_value(0)
         progress_bar.visible = True
+        await asyncio.sleep(0)
 
         from app.core.year_org import scan_folder  # noqa: PLC0415
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
+        _last_scan = [0.0]
 
         async def _update_scan_progress(value: float):
             progress_bar.set_value(value)
             status_label.set_text(f"Scanne … {int(value * 100)} %")
 
         def scan_progress_cb(done, total):
+            import time
+
             if total > 0:
+                now = time.monotonic()
+                if now - _last_scan[0] < 0.1 and done < total:
+                    return
+                _last_scan[0] = now
                 asyncio.run_coroutine_threadsafe(_update_scan_progress(done / total), loop)
 
-        recursive = cb_recursive.value
+        recursive = shared.get("recursive", True)
         result = await loop.run_in_executor(
             _executor,
             lambda: scan_folder(
@@ -118,12 +125,12 @@ def build(shared: dict):
 
         if not result["files_by_year"]:
             status_label.set_text("Keine Dateien mit erkennbarem Jahr gefunden.")
+
             return
 
         _state["scan"] = result
         _state["folder"] = folder
         _state["extensions"] = exts
-        _state["recursive"] = recursive
 
         status_label.set_text(f"{result['total_files']} Dateien gefunden")
         _show_pills(
@@ -140,19 +147,19 @@ def build(shared: dict):
                         cam_dict = result["files_by_year"][year]
                         total_in_year = sum(len(v) for v in cam_dict.values())
                         ui.html(
-                            f'<div style="padding:6px 14px;color:#e2e8f0;'
+                            f'<div style="padding:8px 16px;color:{theme.COLORS["text"]};'
                             f"font-family:Menlo,monospace;font-size:12px;"
                             f'font-weight:600;">'
-                            f'{year}/ <span style="color:#64748b;font-weight:400;">'
+                            f'{year}/ <span style="color:{theme.COLORS["muted"]};font-weight:400;">'
                             f"({total_in_year})</span></div>"
                         )
                         for camera in sorted(cam_dict.keys()):
                             count = len(cam_dict[camera])
                             ui.html(
-                                f'<div style="padding:3px 14px 3px 32px;'
+                                f'<div style="padding:4px 16px 4px 32px;'
                                 f"font-family:Menlo,monospace;font-size:11px;"
-                                f'color:#64748b;">└─ {escape(camera)}'
-                                f'<span style="color:#4f8ef7;margin-left:8px;">'
+                                f'color:{theme.COLORS["muted"]};">└─ {escape(camera)}'
+                                f'<span style="color:{theme.COLORS["accent"]};margin-left:8px;">'
                                 f"{count}</span></div>"
                             )
                 else:
@@ -160,11 +167,11 @@ def build(shared: dict):
                     for year in sorted(result["files_by_year"].keys()):
                         files = result["files_by_year"][year]
                         ui.html(
-                            f'<div style="padding:6px 14px;'
+                            f'<div style="padding:8px 16px;'
                             f"font-family:Menlo,monospace;font-size:12px;"
-                            f'color:#e2e8f0;border-bottom:1px solid #1a2033;">'
-                            f'{year}/ <span style="color:#4f8ef7;">→</span> '
-                            f'<span style="color:#34d399;">{len(files)} Datei(en)'
+                            f'color:{theme.COLORS["text"]};border-bottom:1px solid {theme.COLORS["surface"]};">'
+                            f'{year}/ <span style="color:{theme.COLORS["accent"]};">→</span> '
+                            f'<span style="color:{theme.COLORS["success"]};">{len(files)} Datei(en)'
                             f"</span></div>"
                         )
 
@@ -175,27 +182,27 @@ def build(shared: dict):
                     )
                     for inv in result["invalid_files"][:10]:
                         ui.html(
-                            f'<div style="padding:3px 14px;'
+                            f'<div style="padding:4px 16px;'
                             f'font-family:Menlo,monospace;font-size:11px;'
-                            f'color:#64748b;">{escape(inv["path"].name)}</div>'
+                            f'color:{theme.COLORS["muted"]};">{escape(inv["path"].name)}</div>'
                         )
                     if len(result["invalid_files"]) > 10:
                         ui.html(
-                            f'<div class="mt-hint" style="padding:3px 14px;">'
+                            f'<div class="mt-hint" style="padding:4px 16px;">'
                             f'… und {len(result["invalid_files"]) - 10} weitere</div>'
                         )
 
                 if result["conflicts"]:
                     ui.html(
                         f'<div class="mt-card-header" style="margin-top:4px;'
-                        f'color:#f87171 !important;">'
+                        f'color:{theme.COLORS["danger"]} !important;">'
                         f'{len(result["conflicts"])} Konflikte – Ausführen blockiert</div>'
                     )
                     for c in result["conflicts"][:5]:
                         ui.html(
-                            f'<div style="padding:3px 14px;'
+                            f'<div style="padding:4px 16px;'
                             f'font-family:Menlo,monospace;font-size:11px;'
-                            f'color:#f87171;">{c["filename"]} (Jahr {c["year"]})</div>'
+                            f'color:{theme.COLORS["danger"]};">{c["filename"]} (Jahr {c["year"]})</div>'
                         )
 
         if not result["conflicts"]:
@@ -220,20 +227,28 @@ def build(shared: dict):
         pills_row.visible = False
         progress_bar.set_value(0)
         progress_bar.visible = True
+        await asyncio.sleep(0)
 
         from app.core.year_org import execute_organization  # noqa: PLC0415
 
         group_by_camera = _state["scan"].get("group_by_camera", False)
         exts = _state["extensions"]
-        recursive = _state.get("recursive", True)
-        loop = asyncio.get_event_loop()
+        recursive = shared.get("recursive", True)
+        loop = asyncio.get_running_loop()
+        _last_exec = [0.0]
 
         async def _update_exec_progress(value: float):
             progress_bar.set_value(value)
             status_label.set_text(f"Organisiere … {int(value * 100)} %")
 
         def exec_progress_cb(done, total):
+            import time
+
             if total > 0:
+                now = time.monotonic()
+                if now - _last_exec[0] < 0.1 and done < total:
+                    return
+                _last_exec[0] = now
                 asyncio.run_coroutine_threadsafe(_update_exec_progress(done / total), loop)
 
         result = await loop.run_in_executor(
@@ -271,8 +286,7 @@ def build(shared: dict):
     btn_execute = (
         ui.button("Ausführen", on_click=do_execute, icon="folder_special")
         .classes("mt-btn-success")
-        .props("no-caps")
-        .style("background-color: #34d399 !important; color: #0f1117 !important")
+        .props("color=positive no-caps")
     )
     btn_execute.disable()
 

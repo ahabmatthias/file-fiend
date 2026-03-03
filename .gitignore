@@ -1,12 +1,30 @@
+# Python / venv
 .venv/
 __pycache__/
 *.pyc
+.coverage
+
+# IDE / OS
 .DS_Store
 .idea/
+
+# Build artifacts
 build/FileFiend/
 dist/
 vendor/
 FileFiend-Windows/
 FileFiend-Windows.zip
-test_files/
+
+# Project docs & config (local only)
+CLAUDE.md
+LEARNINGS.md
+docs/
+todos/
+.claude/
+
+# Assets (source PNGs, not build icons)
+assets/alternate/
+
+# Test data
+test_files*/
 claude-artifacts/

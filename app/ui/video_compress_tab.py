@@ -4,13 +4,14 @@ UI-Tab: Video Komprimierung
 
 import asyncio
 import os
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from html import escape
 
 from nicegui import ui
 
 from app.ui import theme
-from app.ui.utils import pick_folder
+from app.ui.utils import pick_folder, validate_folder_path
 
 _executor = ThreadPoolExecutor(max_workers=1)
 
@@ -25,7 +26,7 @@ _ACTION_TAG = {
 def build(shared: dict):
     """Baut den Video-Komprimierungs-Tab – wird innerhalb eines tab_panel aufgerufen."""
     # ── Optionen ──────────────────────────────────────────────────
-    with ui.element("div").classes("mt-card"):
+    with ui.element("div").classes("mt-card w-full"):
         ui.html('<div class="mt-card-header">Optionen</div>')
         with ui.column().classes("w-full gap-2 p-3"):
             with ui.row().classes("w-full items-center gap-2"):
@@ -35,7 +36,7 @@ def build(shared: dict):
                         placeholder="/Users/du/Videos_compressed",
                     )
                     .classes("flex-1")
-                    .props("outlined dense")
+                    .props('outlined dense input-style="direction:rtl;text-align:left"')
                 )
 
                 async def on_pick_target():
@@ -44,27 +45,46 @@ def build(shared: dict):
                         target_input.set_value(result)
 
                 ui.button("Ordner wählen", on_click=on_pick_target, icon="folder_open").classes(
-                    "mt-btn-ghost"
+                    "mt-btn-primary"
                 ).props("no-caps")
 
-            # Auto-Fill Zielordner aus Quellordner
-            src = (shared.get("folder") or "").strip()
-            if src and not target_input.value:
-                target_input.set_value(src + "_compressed")
+            # Reaktives Auto-Fill: Zielordner wird gesetzt sobald Quellordner gewählt wird
+            def _auto_fill_target(folder: str):
+                if folder and not target_input.value.strip():
+                    target_input.set_value(folder + "_compressed")
+
+            shared.setdefault("_on_folder_change", []).append(_auto_fill_target)
 
             with ui.row().classes("items-center gap-4"):
+                if sys.platform == "darwin":
+                    _codec_options = {
+                        "hevc_videotoolbox": "Hardware (Default)",
+                        "libx265": "Software (gründlicher)",
+                    }
+                    _codec_default = "hevc_videotoolbox"
+                    _codec_tooltip = (
+                        "Hardware nutzt den Apple-Chip direkt – schnell und stromsparend. "
+                        "Software encodiert in reinem Code – langsamer, minimal präziser."
+                    )
+                else:
+                    _codec_options = {
+                        "libx265": "Software (Default)",
+                    }
+                    _codec_default = "libx265"
+                    _codec_tooltip = "Software-Encoder – funktioniert auf allen Systemen."
+
                 codec_select = (
                     ui.select(
                         label="Codec",
-                        options={
-                            "hevc_videotoolbox": "Hardware (Default)",
-                            "libx265": "Software (gründlicher)",
-                        },
-                        value="hevc_videotoolbox",
+                        options=_codec_options,
+                        value=_codec_default,
                     )
                     .classes("w-52")
                     .props("outlined dense")
                 )
+                ui.icon("info_outline").classes(
+                    f"text-[{theme.COLORS['accent']}] text-sm cursor-default"
+                ).tooltip(_codec_tooltip)
 
                 min_size_input = (
                     ui.number(label="Min-Größe (MB)", value=30.0, min=0, step=5)
@@ -72,16 +92,9 @@ def build(shared: dict):
                     .props("outlined dense")
                 )
 
-                recursive_cb = ui.checkbox("Mit Unterordnern")
-
-            ui.icon("info_outline").classes("text-[#4f8ef7] text-sm cursor-default").tooltip(
-                "Hardware nutzt den Apple-Chip direkt – schnell und stromsparend. "
-                "Software encodiert in reinem Code – langsamer, minimal präziser."
-            )
-
     # ── Status + Spinner ──────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-3"):
-        spinner = ui.spinner(size="sm").classes("text-[#4f8ef7]")
+        spinner = theme.ember_spinner()
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
 
@@ -116,8 +129,14 @@ def build(shared: dict):
         if not os.path.isdir(source):
             ui.notify("Quellordner nicht gefunden.", type="negative")
             return
+        if not validate_folder_path(source):
+            ui.notify("Quellordner liegt außerhalb des Home-Verzeichnisses.", type="negative")
+            return
         if not target:
             ui.notify("Bitte einen Zielordner eingeben.", type="negative")
+            return
+        if not validate_folder_path(target):
+            ui.notify("Zielordner liegt außerhalb des Home-Verzeichnisses.", type="negative")
             return
         if os.path.abspath(source) == os.path.abspath(target):
             ui.notify("Quell- und Zielordner dürfen nicht identisch sein.", type="negative")
@@ -129,16 +148,17 @@ def build(shared: dict):
         pills_row.visible = False
         _state["preview"] = None
         btn_execute.disable()
+        await asyncio.sleep(0)
 
         from app.core.video_compress import preview_compression  # noqa: PLC0415
 
         config = {
-            "recursive": recursive_cb.value,
+            "recursive": shared.get("recursive", True),
             "min_size_mb": float(min_size_input.value or 30.0),
             "codec": codec_select.value,
         }
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
             _executor, lambda: preview_compression(source, target, **config)
         )
@@ -147,6 +167,7 @@ def build(shared: dict):
 
         if not result:
             status_label.set_text("Keine Video-Dateien im Quellordner gefunden.")
+
             return
 
         _state["preview"] = result
@@ -185,22 +206,22 @@ def build(shared: dict):
                 else "–"
             )
             rows_html.append(
-                f'<tr>'
+                f"<tr>"
                 f'<td style="text-align:left;">{escape(e["name"])}</td>'
                 f'<td style="text-align:right;">{e["size_mb"]} MB</td>'
-                f'<td>{escape(e["resolution"])}</td>'
-                f'<td>{bitrate}</td>'
+                f"<td>{escape(e['resolution'])}</td>"
+                f"<td>{bitrate}</td>"
                 f'<td><span class="{tag_cls}">{tag_label}</span></td>'
-                f'</tr>'
+                f"</tr>"
             )
 
         table_html = (
             '<div class="mt-table">'
             '<table class="q-table" style="width:100%;border-collapse:collapse;">'
-            f'<thead>{header}</thead>'
-            f'<tbody>{"".join(rows_html)}</tbody>'
-            '</table>'
-            '</div>'
+            f"<thead>{header}</thead>"
+            f"<tbody>{''.join(rows_html)}</tbody>"
+            "</table>"
+            "</div>"
         )
 
         with preview_col:
@@ -209,7 +230,7 @@ def build(shared: dict):
                 ui.html(table_html)
                 if len(result) > MAX_SHOWN:
                     ui.html(
-                        f'<div class="mt-hint" style="padding:6px 14px;">'
+                        f'<div class="mt-hint" style="padding:8px 16px;">'
                         f"… und {len(result) - MAX_SHOWN} weitere</div>"
                     )
 
@@ -234,10 +255,21 @@ def build(shared: dict):
         btn_execute.disable()
         preview_col.clear()
         pills_row.visible = False
+        await asyncio.sleep(0)
 
-        from app.core.video_compress import compress_files  # noqa: PLC0415
+        from app.core.video_compress import ProbeInfo, compress_files  # noqa: PLC0415
 
-        loop = asyncio.get_event_loop()
+        # Build cached probes from preview to avoid re-running ffprobe
+        cached_probes: dict[str, ProbeInfo] = {}
+        for entry in _state.get("preview") or []:
+            if entry.get("probe_width") is not None:
+                cached_probes[entry["name"]] = ProbeInfo(
+                    width=entry["probe_width"],
+                    height=entry["probe_height"],
+                    bitrate_bps=entry["probe_bitrate_bps"],
+                )
+
+        loop = asyncio.get_running_loop()
 
         async def _set_status(text: str):
             status_label.set_text(text)
@@ -247,7 +279,9 @@ def build(shared: dict):
 
         result = await loop.run_in_executor(
             _executor,
-            lambda: compress_files(source, target, **config, progress_cb=progress_cb),
+            lambda: compress_files(
+                source, target, **config, progress_cb=progress_cb, cached_probes=cached_probes
+            ),
         )
 
         spinner.visible = False
@@ -259,15 +293,29 @@ def build(shared: dict):
         with pills_row:
             if result["compressed"]:
                 theme.pill(f"{result['compressed']} komprimiert", "good")
+            if result.get("hw_fallbacks"):
+                theme.pill(f"{result['hw_fallbacks']}× Software-Fallback", "neutral")
             if result["skipped"]:
                 theme.pill(f"{result['skipped']} übersprungen", "")
             if result["failed"]:
                 theme.pill(f"{result['failed']} Fehler", "danger")
 
+        if result.get("error_details"):
+            with preview_col:
+                with ui.element("div").classes("mt-card w-full"):
+                    ui.html('<div class="mt-card-header">Fehler</div>')
+                    for err in result["error_details"][:20]:
+                        ui.html(
+                            f'<div class="mt-rename-row">'
+                            f'<span class="mt-rename-old">{escape(err["file"])}</span>'
+                            f'<span class="mt-rename-arrow">✕</span>'
+                            f'<span style="color:{theme.COLORS["danger"]}">{escape(err["error"])}</span>'
+                            f"</div>"
+                        )
+
     btn_execute = (
         ui.button("Komprimieren", on_click=do_execute, icon="movie")
         .classes("mt-btn-success")
-        .props("no-caps")
-        .style("background-color: #34d399 !important; color: #0f1117 !important")
+        .props("color=positive no-caps")
     )
     btn_execute.disable()

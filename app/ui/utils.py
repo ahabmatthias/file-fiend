@@ -17,12 +17,34 @@ def short_path(path: str, folder: str) -> str:
 
 
 def validate_folder_path(folder: str) -> bool:
-    """Prüft ob ein Pfad innerhalb des Home-Verzeichnisses liegt (Path-Traversal-Schutz)."""
+    """Prüft ob ein Pfad in einem erlaubten Bereich liegt (Home + externe Laufwerke).
+
+    Blockt System-Verzeichnisse wie /System, /usr, C:\\Windows etc.
+    Erlaubt Home-Verzeichnis und externe Medien (/Volumes/, D:\\ etc.).
+    """
+    import sys
+
     try:
         resolved = Path(folder).resolve()
-        return resolved.is_relative_to(Path.home())
     except (ValueError, OSError):
         return False
+
+    # Home ist immer erlaubt
+    if resolved.is_relative_to(Path.home()):
+        return True
+
+    # macOS: /Volumes/ für externe Laufwerke
+    if sys.platform == "darwin" and resolved.is_relative_to(Path("/Volumes")):
+        return True
+
+    # Windows: jedes Nicht-System-Laufwerk (z.B. D:\, E:\)
+    if sys.platform == "win32":
+        drive = resolved.drive.upper()
+        # Erlaube alles außer leeres Drive; blocke Windows-Systemordner
+        if drive and not resolved.is_relative_to(Path(f"{drive}\\Windows")):
+            return True
+
+    return False
 
 
 def build_ext_filter(fotos: bool, videos: bool, audio: bool = False) -> set[str]:
