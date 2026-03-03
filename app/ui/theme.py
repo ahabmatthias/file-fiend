@@ -58,7 +58,7 @@ body, .q-page, .nicegui-content {
 /* ── Header / Folder Picker ────────────────────────────────── */
 .mt-header {
     background: $surface$;
-    border-bottom: 1px solid $border$;
+    border-bottom: 2px solid $accent$;
     padding: 10px 20px;
 }
 
@@ -72,7 +72,7 @@ body, .q-page, .nicegui-content {
 /* ── Tabs ──────────────────────────────────────────────────── */
 .q-tabs { background: $surface$ !important; border-bottom: 1px solid $border$; }
 .q-tab  { color: $muted$ !important; font-size: 12px !important; font-weight: 500 !important; }
-.q-tab--active { color: $accent$ !important; }
+.q-tab--active { color: $accent$ !important; background: rgba(246,49,56,0.06) !important; }
 .q-tab__indicator { background: $accent$ !important; }
 .q-tab-panels, .q-tab-panel { background: $bg$ !important; }
 
@@ -133,6 +133,7 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
     background: $surface$ !important;
     border: 1px solid $border$ !important;
     border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 .mt-card-header {
     background: $surface2$ !important;
