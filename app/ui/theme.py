@@ -258,8 +258,9 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 /* ── Checkboxes ────────────────────────────────────────────── */
 .q-checkbox__inner--truthy .q-checkbox__bg,
 .q-checkbox__inner--indet  .q-checkbox__bg { background: $accent$ !important; border-color: $accent$ !important; }
-.q-checkbox__bg { border-color: $border$ !important; }
+.q-checkbox__bg { border-color: $muted$ !important; }
 .q-checkbox__label { color: $muted$ !important; font-size: 12px !important; }
+.mt-filter-cbs .q-checkbox { min-width: 75px; }
 
 /* ── Select / Number inputs ────────────────────────────────── */
 .q-select .q-field__control { background: $surface2$ !important; }
@@ -269,22 +270,6 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 
 /* ── Helper text ───────────────────────────────────────────── */
 .mt-hint { font-size: 11px; color: $muted$; }
-
-/* ── Empty States ─────────────────────────────────────────── */
-.mt-empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 16px;
-    gap: 6px;
-    color: $muted$;
-    text-align: center;
-    user-select: none;
-}
-.mt-empty-state-icon { font-size: 40px; opacity: 0.35; }
-.mt-empty-state-title { font-size: 13px; font-weight: 500; color: $text$; opacity: 0.7; }
-.mt-empty-state-hint { font-size: 12px; color: $muted$; }
 
 /* ── Separator ─────────────────────────────────────────────── */
 .q-separator { background: $border$ !important; }
@@ -375,12 +360,3 @@ def pill(text: str, variant: str = "") -> None:
     """
     cls = f"mt-pill mt-pill-{variant}" if variant else "mt-pill"
     ui.html(f'<span class="{cls}">{_esc(text)}</span>')
-
-
-def empty_state(icon: str, title: str, hint: str) -> ui.element:
-    """Zentrierter Platzhalter für leere Tabs. Caller setzt .visible = False bei Aktivität."""
-    with ui.column().classes("mt-empty-state") as container:
-        ui.icon(icon).classes("mt-empty-state-icon")
-        ui.label(title).classes("mt-empty-state-title")
-        ui.label(hint).classes("mt-empty-state-hint")
-    return container

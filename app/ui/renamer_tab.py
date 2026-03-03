@@ -19,14 +19,9 @@ _executor = ThreadPoolExecutor(max_workers=1)
 
 def build(shared: dict):
     """Baut den Media-Renamer-Tab – wird innerhalb eines tab_panel aufgerufen."""
-    with ui.row().classes("items-center gap-4 flex-wrap"):
+    with ui.row().classes("items-center gap-4 flex-wrap mt-filter-cbs"):
         cb_fotos = ui.checkbox("Fotos", value=True)
         cb_videos = ui.checkbox("Videos", value=True)
-
-    # ── Empty State ─────────────────────────────────────────────────
-    empty = theme.empty_state(
-        "drive_file_rename_outline", "Keine Vorschau", "Ordner wählen und Vorschau drücken"
-    )
 
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
@@ -70,7 +65,6 @@ def build(shared: dict):
             status_label.set_text("Bitte mindestens einen Dateityp wählen.")
             return
 
-        empty.visible = False
         spinner.visible = True
         status_label.set_text("Scanne …")
         preview_col.clear()
@@ -91,7 +85,7 @@ def build(shared: dict):
         if not files:
             spinner.visible = False
             status_label.set_text("Keine Mediendateien gefunden.")
-            empty.visible = True
+
             return
 
         results = await loop.run_in_executor(_executor, lambda: process_files(files, dry_run=True))

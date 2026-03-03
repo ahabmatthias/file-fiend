@@ -18,10 +18,9 @@ _executor = ThreadPoolExecutor(max_workers=1)
 def build(shared: dict):
     """Baut den Jahr-Organisations-Tab – wird innerhalb eines tab_panel aufgerufen."""
     # ── Optionen ────────────────────────────────────────────────────
-    with ui.row().classes("items-center gap-4 flex-wrap mt-1"):
+    with ui.row().classes("items-center gap-4 flex-wrap mt-1 mt-filter-cbs"):
         cb_fotos = ui.checkbox("Fotos", value=True)
         cb_videos = ui.checkbox("Videos", value=True)
-    ui.separator()
     with ui.row().classes("items-center gap-2 mt-1"):
         camera_checkbox = ui.checkbox("Zusätzlich nach Kamera ordnen")
         ui.icon("info_outline").classes(
@@ -30,9 +29,6 @@ def build(shared: dict):
             "Kamera-Erkennung liest EXIF Make/Model aus den Dateien. "
             "Dateien ohne EXIF landen im Ordner 'Sonstige'."
         )
-
-    # ── Empty State ─────────────────────────────────────────────────
-    empty = theme.empty_state("layers", "Keine Vorschau", "Ordner wählen und Vorschau drücken")
 
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
@@ -80,7 +76,7 @@ def build(shared: dict):
             return
 
         group_by_camera = camera_checkbox.value
-        empty.visible = False
+
         spinner.visible = True
         status_label.set_text("Scanne …")
         preview_col.clear()
@@ -129,7 +125,7 @@ def build(shared: dict):
 
         if not result["files_by_year"]:
             status_label.set_text("Keine Dateien mit erkennbarem Jahr gefunden.")
-            empty.visible = True
+
             return
 
         _state["scan"] = result
