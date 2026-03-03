@@ -5,9 +5,11 @@ Starten mit: python -m app.main
 """
 
 import multiprocessing
+from pathlib import Path
 
 multiprocessing.freeze_support()
 
+from nicegui import app as nicegui_app  # noqa: E402
 from nicegui import ui  # noqa: E402
 
 from app.core.runtime import setup_path  # noqa: E402
@@ -20,11 +22,27 @@ from app.ui import (  # noqa: E402
 )
 from app.ui.utils import pick_folder  # noqa: E402
 
+# ── Static asset mount (absolute path for PyInstaller compatibility) ──
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+nicegui_app.add_static_files("/assets", str(_PROJECT_ROOT / "assets" / "alternate"))
+
 
 @ui.page("/")
 def index():
     theme.apply()
 
+    # ── Splash Overlay ──────────────────────────────────────────────────
+    splash = ui.element("div").classes("mt-splash")
+    with splash:
+        ui.image("/assets/sleek_fiend.png").classes("mt-splash-logo")
+        ui.html(
+            '<span class="mt-splash-wordmark">'
+            "File"
+            f'<span style="color:{theme.COLORS["accent"]};position:relative;top:0.5px;">'
+            "Fiend</span></span>"
+        )
+
+    # ── Main UI (hidden behind splash) ──────────────────────────────────
     shared: dict = {"folder": "", "recursive": True, "_on_folder_change": []}
 
     def _notify_folder_change(folder: str):
@@ -33,7 +51,14 @@ def index():
 
     with ui.header().classes("mt-header"):
         with ui.row().classes("items-center gap-3 w-full"):
-            ui.icon("folder_open").classes(f"text-[{theme.COLORS['accent']}] text-base")
+            ui.html(
+                f'<span style="display:inline-flex;align-items:baseline;'
+                f'font-size:15px;letter-spacing:-0.01em;'
+                f'white-space:nowrap;user-select:none;">'
+                f'<span style="font-weight:700;">File</span>'
+                f'<span style="font-weight:700;color:{theme.COLORS["accent"]};position:relative;top:0.5px;">'
+                f"Fiend</span></span>"
+            )
             shared_input = (
                 ui.input(
                     placeholder="/Users/du/Bilder",
@@ -84,6 +109,9 @@ def index():
         with ui.tab_panel(tab_video):
             video_compress_tab.build(shared)
 
+    # ── Dismiss splash after 2s ─────────────────────────────────────────
+    ui.timer(3.0, lambda: splash.set_visibility(False), once=True)
+
 
 def main():
     setup_path()
@@ -96,6 +124,7 @@ def main():
         window_size=(1000, 680),
         port=find_open_port(),
         reload=False,
+        favicon="/assets/sleek_fiend.png",
     )
 
 

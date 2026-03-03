@@ -309,6 +309,32 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 @media (prefers-reduced-motion: reduce) {
     .mt-ember-ring { animation: none !important; opacity: 0.6; }
 }
+
+/* ── Splash Screen ────────────────────────────────────────── */
+.mt-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: radial-gradient(circle at 50% 45%, #1a1e26 0%, $bg$ 60%);
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
+    will-change: opacity;
+}
+.mt-splash.mt-splash-fade { opacity: 0; pointer-events: none; }
+.mt-splash-logo { width: 180px; height: 180px; }
+.mt-splash-wordmark {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: $text$;
+    user-select: none;
+}
 """
 
 
