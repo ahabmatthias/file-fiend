@@ -304,6 +304,9 @@ def preview_compression(
                 "current_bitrate_mbps": current_bitrate_mbps,
                 "target_bitrate": target_bitrate,
                 "action": action,
+                "probe_width": probe.width,
+                "probe_height": probe.height,
+                "probe_bitrate_bps": probe.bitrate_bps,
             }
         )
 
@@ -318,12 +321,14 @@ def compress_files(
     min_size_mb: float = 30.0,
     codec: str = "auto",
     progress_cb=None,
+    cached_probes: dict[str, ProbeInfo] | None = None,
 ) -> dict:
     """
     Führt Komprimierung aus.
 
     progress_cb(current, total, filename) wird vor jeder Datei aufgerufen.
-    Gibt zurück: {compressed: int, skipped: int, failed: int, errors: list[str]}
+    cached_probes: {filename: ProbeInfo} aus Preview – vermeidet erneutes ffprobe.
+    Gibt zurück: {compressed, skipped, failed, hw_fallbacks, error_details}
     """
     source_path = Path(source)
     target_path = Path(target)
@@ -346,7 +351,6 @@ def compress_files(
     total = len(files)
     compressed = skipped = failed = 0
     hw_fallbacks = 0
-    errors: list[str] = []
     error_details: list[dict] = []
 
     for idx, src in enumerate(files, 1):
@@ -363,7 +367,10 @@ def compress_files(
             skipped += 1
             continue
 
-        probe = ffprobe_json(src)
+        if cached_probes and src.name in cached_probes:
+            probe = cached_probes[src.name]
+        else:
+            probe = ffprobe_json(src)
         target_bitrate = pick_target_bitrate(probe.width, cfg)
         target_bitrate_mbps = float(target_bitrate.rstrip("M"))
 
@@ -383,7 +390,6 @@ def compress_files(
                 except Exception as e:
                     failed += 1
                     msg = categorize_error(str(e))
-                    errors.append(f"{src.name}: {msg}")
                     error_details.append({"file": src.name, "error": msg})
             else:
                 skipped += 1
@@ -423,7 +429,6 @@ def compress_files(
 
                 failed += 1
                 msg = categorize_error(proc.stderr or "")
-                errors.append(f"{src.name}: {msg}")
                 error_details.append({"file": src.name, "error": msg})
                 try:
                     if dst_encoded.exists():
@@ -433,7 +438,6 @@ def compress_files(
         except Exception as e:
             failed += 1
             msg = categorize_error(str(e))
-            errors.append(f"{src.name}: {msg}")
             error_details.append({"file": src.name, "error": msg})
 
     return {
@@ -441,6 +445,5 @@ def compress_files(
         "skipped": skipped,
         "failed": failed,
         "hw_fallbacks": hw_fallbacks,
-        "errors": errors,
         "error_details": error_details,
     }

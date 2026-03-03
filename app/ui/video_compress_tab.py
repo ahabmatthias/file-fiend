@@ -82,9 +82,9 @@ def build(shared: dict):
                     .classes("w-52")
                     .props("outlined dense")
                 )
-                ui.icon("info_outline").classes("text-[#f63138] text-sm cursor-default").tooltip(
-                    _codec_tooltip
-                )
+                ui.icon("info_outline").classes(
+                    f"text-[{theme.COLORS['accent']}] text-sm cursor-default"
+                ).tooltip(_codec_tooltip)
 
                 min_size_input = (
                     ui.number(label="Min-Größe (MB)", value=30.0, min=0, step=5)
@@ -158,7 +158,7 @@ def build(shared: dict):
             "codec": codec_select.value,
         }
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
             _executor, lambda: preview_compression(source, target, **config)
         )
@@ -205,22 +205,22 @@ def build(shared: dict):
                 else "–"
             )
             rows_html.append(
-                f'<tr>'
+                f"<tr>"
                 f'<td style="text-align:left;">{escape(e["name"])}</td>'
                 f'<td style="text-align:right;">{e["size_mb"]} MB</td>'
-                f'<td>{escape(e["resolution"])}</td>'
-                f'<td>{bitrate}</td>'
+                f"<td>{escape(e['resolution'])}</td>"
+                f"<td>{bitrate}</td>"
                 f'<td><span class="{tag_cls}">{tag_label}</span></td>'
-                f'</tr>'
+                f"</tr>"
             )
 
         table_html = (
             '<div class="mt-table">'
             '<table class="q-table" style="width:100%;border-collapse:collapse;">'
-            f'<thead>{header}</thead>'
-            f'<tbody>{"".join(rows_html)}</tbody>'
-            '</table>'
-            '</div>'
+            f"<thead>{header}</thead>"
+            f"<tbody>{''.join(rows_html)}</tbody>"
+            "</table>"
+            "</div>"
         )
 
         with preview_col:
@@ -256,9 +256,19 @@ def build(shared: dict):
         pills_row.visible = False
         await asyncio.sleep(0)
 
-        from app.core.video_compress import compress_files  # noqa: PLC0415
+        from app.core.video_compress import ProbeInfo, compress_files  # noqa: PLC0415
 
-        loop = asyncio.get_event_loop()
+        # Build cached probes from preview to avoid re-running ffprobe
+        cached_probes: dict[str, ProbeInfo] = {}
+        for entry in _state.get("preview") or []:
+            if entry.get("probe_width") is not None:
+                cached_probes[entry["name"]] = ProbeInfo(
+                    width=entry["probe_width"],
+                    height=entry["probe_height"],
+                    bitrate_bps=entry["probe_bitrate_bps"],
+                )
+
+        loop = asyncio.get_running_loop()
 
         async def _set_status(text: str):
             status_label.set_text(text)
@@ -268,7 +278,9 @@ def build(shared: dict):
 
         result = await loop.run_in_executor(
             _executor,
-            lambda: compress_files(source, target, **config, progress_cb=progress_cb),
+            lambda: compress_files(
+                source, target, **config, progress_cb=progress_cb, cached_probes=cached_probes
+            ),
         )
 
         spinner.visible = False
@@ -296,7 +308,7 @@ def build(shared: dict):
                             f'<div class="mt-rename-row">'
                             f'<span class="mt-rename-old">{escape(err["file"])}</span>'
                             f'<span class="mt-rename-arrow">✕</span>'
-                            f'<span style="color:#f87171">{escape(err["error"])}</span>'
+                            f'<span style="color:{theme.COLORS["danger"]}">{escape(err["error"])}</span>'
                             f"</div>"
                         )
 

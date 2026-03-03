@@ -4,6 +4,7 @@ Einbinden mit: theme.apply()
 """
 
 import re
+from html import escape as _esc
 
 from nicegui import ui
 
@@ -21,7 +22,6 @@ COLORS = {
     "accent": "#f63138",  # Logo-Rot, Primary Buttons
     "success": "#10b981",  # Bestätigung (Emerald – kühler als altes Grün)
     "danger": "#f87171",  # Destruktiv
-    "danger_filled": "#dc2626",  # Confirm-Dialog Hintergrund
     # Derived
     "row_border": "#161920",  # = surface
     "pill_neutral_border": "#3a4050",  # abgedunkeltes Border
@@ -159,7 +159,6 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
     white-space: nowrap;
 }
 .mt-pill-info    { border-color: $accent$ !important; color: $accent$ !important; }
-.mt-pill-success { border-color: $success$ !important; color: $success$ !important; }
 .mt-pill-good    { border-color: $success$ !important; color: $success$ !important; }
 .mt-pill-neutral { border-color: $pill_neutral_border$ !important; color: $muted$ !important; }
 .mt-pill-danger  { border-color: $danger$ !important; color: $danger$ !important; }
@@ -348,4 +347,4 @@ def pill(text: str, variant: str = "") -> None:
     variant: '' | 'info' | 'good' | 'success' | 'neutral' | 'danger'
     """
     cls = f"mt-pill mt-pill-{variant}" if variant else "mt-pill"
-    ui.html(f'<span class="{cls}">{text}</span>')
+    ui.html(f'<span class="{cls}">{_esc(text)}</span>')

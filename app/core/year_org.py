@@ -16,15 +16,6 @@ from collections import defaultdict
 from collections.abc import Callable
 from pathlib import Path
 
-from PIL import Image
-
-try:
-    import pillow_heif
-
-    pillow_heif.register_heif_opener()
-except ImportError:
-    pass  # HEIC-Support optional – ohne Plugin werden HEIC-Dateien übersprungen
-
 from app.core.constants import ALL_MEDIA_EXTS, IMAGE_EXTS
 from app.core.renamer import get_metadata
 
@@ -140,11 +131,26 @@ def _find_empty_folders(folder_path: str) -> list:
     return empty_folders
 
 
+_heif_registered = False
+
+
 def _read_exif_year(file_path: Path) -> int | None:
     """
     Liest das Aufnahmejahr aus Bilddateien.
     Stufen: EXIF IFD0 → EXIF Sub-IFD (34665) → XMP-Metadaten.
     """
+    from PIL import Image  # noqa: PLC0415
+
+    global _heif_registered  # noqa: PLW0603
+    if not _heif_registered:
+        try:
+            import pillow_heif  # noqa: PLC0415
+
+            pillow_heif.register_heif_opener()
+        except ImportError:
+            pass  # HEIC-Support optional
+        _heif_registered = True
+
     try:
         with Image.open(file_path) as img:
             exif = img.getexif()

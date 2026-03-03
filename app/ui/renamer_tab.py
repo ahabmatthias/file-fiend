@@ -76,7 +76,7 @@ def build(shared: dict):
 
         from app.core.renamer import collect_files, process_files  # noqa: PLC0415
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         recursive = shared.get("recursive", True)
         files = await loop.run_in_executor(
             _executor, lambda: collect_files(folder, recursive=recursive, extensions=exts)
@@ -138,7 +138,7 @@ def build(shared: dict):
         from app.core.renamer import process_files  # noqa: PLC0415
 
         files = _state["files"]
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         results = await loop.run_in_executor(_executor, lambda: process_files(files, dry_run=False))
 
         spinner.visible = False
@@ -156,7 +156,7 @@ def build(shared: dict):
                             f'<div class="mt-rename-row">'
                             f'<span class="mt-rename-old">{escape(str(err["file"]))}</span>'
                             f'<span class="mt-rename-arrow">✕</span>'
-                            f'<span style="color:#f87171">{escape(str(err["error"]))}</span>'
+                            f'<span style="color:{theme.COLORS["danger"]}">{escape(str(err["error"]))}</span>'
                             f"</div>"
                         )
 
@@ -174,7 +174,9 @@ def build(shared: dict):
             await _execute_rename()
 
         with ui.dialog() as dialog, ui.card().classes("mt-card"):
-            ui.label(f"{n_renames} Datei(en) umbenennen?").classes("font-semibold text-[#e4e7ec]")
+            ui.label(f"{n_renames} Datei(en) umbenennen?").classes(
+                f"font-semibold text-[{theme.COLORS['text']}]"
+            )
             ui.label("Die Originalnamen gehen verloren.").classes("mt-hint")
             with ui.row().classes("w-full justify-end gap-2 mt-2"):
                 ui.button("Abbrechen", on_click=dialog.close).classes("mt-btn-ghost").props(

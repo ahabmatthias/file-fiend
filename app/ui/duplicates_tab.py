@@ -3,6 +3,7 @@ UI-Tab: Duplikat-Finder
 """
 
 import asyncio
+import hashlib
 import os
 from concurrent.futures import ThreadPoolExecutor
 from html import escape
@@ -32,7 +33,7 @@ def _static_url(path: str) -> str | None:
     if ext not in _PREVIEW_IMAGE_EXTS:
         return None
     folder = str(p.parent)
-    route = f"/preview{abs(hash(folder)) % 100000}"
+    route = f"/preview{hashlib.md5(folder.encode()).hexdigest()[:10]}"
     if route not in _mounted_routes:
         nicegui_app.add_static_files(route, folder)
         _mounted_routes.add(route)
@@ -92,7 +93,7 @@ def build(shared: dict):
         progress_bar.visible = True
         await asyncio.sleep(0)  # flush: Browser erhält spinner + progress sofort
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         _last_update = [0.0]  # Zeitstempel für Throttle
 
         async def _update_progress(value: float):
@@ -145,7 +146,7 @@ def build(shared: dict):
                                 # Vorschau
                                 if url:
                                     ui.image(url).classes("w-16 h-16 object-cover rounded").style(
-                                        "border: 1px solid #262b36;"
+                                        f"border: 1px solid {theme.COLORS['border']};"
                                     )
                                 else:
                                     with (
@@ -153,10 +154,13 @@ def build(shared: dict):
                                         .classes(
                                             "w-16 h-16 flex items-center justify-center rounded"
                                         )
-                                        .style("background: #1c2028; border: 1px solid #262b36;")
+                                        .style(
+                                            f"background: {theme.COLORS['surface2']};"
+                                            f" border: 1px solid {theme.COLORS['border']};"
+                                        )
                                     ):
                                         ui.icon(_file_icon(path), size="1.5rem").classes(
-                                            "text-[#7f8694]"
+                                            f"text-[{theme.COLORS['muted']}]"
                                         )
 
                                 # Info + Checkbox
@@ -202,7 +206,7 @@ def build(shared: dict):
 
         with ui.dialog() as dialog, ui.card().classes("mt-card"):
             ui.label(f"{len(to_delete)} Datei(en) endgültig löschen?").classes(
-                "font-semibold text-[#e4e7ec]"
+                f"font-semibold text-[{theme.COLORS['text']}]"
             )
             ui.label("Diese Aktion kann nicht rückgängig gemacht werden.").classes("mt-hint")
             with ui.row().classes("w-full justify-end gap-2 mt-2"):

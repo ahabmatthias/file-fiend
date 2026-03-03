@@ -33,7 +33,7 @@ def index():
 
     with ui.header().classes("mt-header"):
         with ui.row().classes("items-center gap-3 w-full"):
-            ui.icon("folder_open").classes("text-[#f63138] text-base")
+            ui.icon("folder_open").classes(f"text-[{theme.COLORS['accent']}] text-base")
             shared_input = (
                 ui.input(
                     placeholder="/Users/du/Bilder",

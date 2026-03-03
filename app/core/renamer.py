@@ -7,11 +7,6 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from PIL import Image
-from PIL.ExifTags import TAGS
-from pymediainfo import MediaInfo
-from tqdm import tqdm
-
 from app.core.constants import IMAGE_EXTS, VIDEO_EXTS
 
 _SUPPORTED_EXTS = IMAGE_EXTS | VIDEO_EXTS
@@ -28,6 +23,10 @@ def detect_file_status(filename: str) -> bool:
 
 def get_metadata(file_path: str, file_type: str) -> dict:
     """Extrahiert datetime, make, model aus Bild/Video-Metadaten."""
+    from PIL import Image  # noqa: PLC0415
+    from PIL.ExifTags import TAGS  # noqa: PLC0415
+    from pymediainfo import MediaInfo  # noqa: PLC0415
+
     try:
         if file_type == "image":
             with Image.open(file_path) as image:
@@ -132,7 +131,7 @@ def process_files(files_list: list[dict], dry_run: bool = True) -> dict:
         "renames": [],
     }
 
-    for file_info in tqdm(files_list, desc="Verarbeite", unit="Datei", disable=True):
+    for file_info in files_list:
         try:
             file_path = file_info["path"]
 
