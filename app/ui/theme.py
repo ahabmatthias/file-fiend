@@ -46,7 +46,7 @@ _CSS_TEMPLATE = """
 body, .q-page, .nicegui-content {
     background: $bg$ !important;
     color: $text$ !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif !important;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Inter', sans-serif !important;
     font-size: 13px !important;
 }
 
@@ -152,7 +152,7 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
     padding: 3px 10px;
     border-radius: 20px;
     font-size: 11px;
-    font-family: 'Menlo', 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', 'Menlo', monospace;
     background: $surface2$;
     border: 1px solid $border$;
     color: $muted$;
@@ -183,7 +183,7 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 }
 .mt-table .q-table tbody tr td {
     color: $text$ !important;
-    font-family: 'Menlo', 'JetBrains Mono', monospace !important;
+    font-family: 'JetBrains Mono', 'Menlo', monospace !important;
     font-size: 12px !important;
     border-bottom: 1px solid $row_border$ !important;
 }
@@ -213,7 +213,7 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
     gap: 8px;
     padding: 6px 14px;
     border-bottom: 1px solid $row_border$;
-    font-family: 'Menlo', 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', 'Menlo', monospace;
     font-size: 11px;
 }
 .mt-rename-row:hover { background: $surface2$; }
@@ -232,7 +232,7 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
     background: $surface2$;
     border-bottom: 1px solid $border$;
     padding: 7px 14px;
-    font-family: 'Menlo', 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', 'Menlo', monospace;
     font-size: 11px;
     color: $muted$;
 }
@@ -244,12 +244,12 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 .mt-dupe-row:hover { background: $surface2$; }
 .mt-dupe-row:last-child { border-bottom: none; }
 .mt-dupe-name {
-    font-family: 'Menlo', 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', 'Menlo', monospace;
     font-size: 12px;
     color: $text$;
 }
 .mt-dupe-path {
-    font-family: 'Menlo', 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', 'Menlo', monospace;
     font-size: 10px;
     color: $muted$;
 }
@@ -330,6 +330,16 @@ def apply() -> None:
         positive=COLORS["success"],
         negative=COLORS["danger"],
         accent=COLORS["accent"],
+    )
+    # Google Fonts – DM Sans (UI) + JetBrains Mono (Code)
+    # Fallback auf System-Fonts wenn offline (siehe font-family im CSS)
+    ui.add_head_html(
+        '<link rel="preconnect" href="https://fonts.googleapis.com">'
+        '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
+        '<link href="https://fonts.googleapis.com/css2'
+        "?family=DM+Sans:wght@400;500;600;700"
+        "&family=JetBrains+Mono:wght@400;500;600"
+        '&display=swap" rel="stylesheet">'
     )
     ui.add_head_html(f"<style>{CSS}</style>")
 
