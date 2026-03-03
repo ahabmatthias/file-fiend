@@ -70,6 +70,11 @@ def build(shared: dict):
         cb_videos = ui.checkbox("Videos", value=True)
         cb_audio = ui.checkbox("Audio", value=False)
 
+    # ── Empty State ─────────────────────────────────────────────────
+    empty = theme.empty_state(
+        "content_copy", "Keine Duplikate geladen", "Ordner wählen und Scannen drücken"
+    )
+
     # ── Scan ───────────────────────────────────────────────────────
     async def do_scan():
         folder = shared["folder"].strip() if shared else ""
@@ -85,6 +90,7 @@ def build(shared: dict):
             status_label.set_text("Bitte mindestens einen Dateityp wählen.")
             return
 
+        empty.visible = False
         spinner.visible = True
         status_label.set_text("Scanne …")
         results_col.clear()
@@ -121,6 +127,7 @@ def build(shared: dict):
 
         if not dupes:
             status_label.set_text("Keine Duplikate gefunden.")
+            empty.visible = True
             return
 
         total_files = sum(len(v) for v in dupes.values())

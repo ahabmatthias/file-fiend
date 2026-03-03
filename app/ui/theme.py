@@ -59,13 +59,13 @@ body, .q-page, .nicegui-content {
 .mt-header {
     background: $surface$;
     border-bottom: 2px solid $accent$;
-    padding: 10px 20px;
+    padding: 10px 24px;
 }
 
 /* ── Header Sub-Row (Mit Unterordnern) ────────────────────── */
 .mt-header-sub {
     border-top: 1px solid $border$;
-    padding: 6px 20px !important;
+    padding: 6px 24px !important;
     min-height: auto !important;
 }
 
@@ -96,7 +96,7 @@ body .q-btn.mt-btn-ghost {
     border-radius: 6px !important;
     font-size: 12px !important;
     font-weight: 500 !important;
-    padding: 0 14px !important;
+    padding: 0 16px !important;
     height: 32px !important;
     box-shadow: none !important;
 }
@@ -138,7 +138,7 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 .mt-card-header {
     background: $surface2$ !important;
     border-bottom: 1px solid $border$ !important;
-    padding: 8px 14px !important;
+    padding: 8px 16px !important;
     font-size: 11px !important;
     font-weight: 600 !important;
     color: $muted$ !important;
@@ -150,7 +150,7 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 .mt-pill {
     display: inline-flex;
     align-items: center;
-    padding: 3px 10px;
+    padding: 4px 10px;
     border-radius: 20px;
     font-size: 11px;
     font-family: 'JetBrains Mono', 'Menlo', monospace;
@@ -195,7 +195,7 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 .mt-tag {
     display: inline-flex;
     align-items: center;
-    padding: 2px 8px;
+    padding: 3px 8px;
     border-radius: 4px;
     font-size: 10px;
     font-weight: 600;
@@ -212,7 +212,7 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 8px;
-    padding: 6px 14px;
+    padding: 8px 16px;
     border-bottom: 1px solid $row_border$;
     font-family: 'JetBrains Mono', 'Menlo', monospace;
     font-size: 11px;
@@ -232,13 +232,13 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 .mt-dupe-header {
     background: $surface2$;
     border-bottom: 1px solid $border$;
-    padding: 7px 14px;
+    padding: 8px 16px;
     font-family: 'JetBrains Mono', 'Menlo', monospace;
     font-size: 11px;
     color: $muted$;
 }
 .mt-dupe-row {
-    padding: 8px 14px;
+    padding: 8px 16px;
     border-bottom: 1px solid $row_border$;
     transition: background 0.1s;
 }
@@ -269,6 +269,22 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 
 /* ── Helper text ───────────────────────────────────────────── */
 .mt-hint { font-size: 11px; color: $muted$; }
+
+/* ── Empty States ─────────────────────────────────────────── */
+.mt-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    gap: 6px;
+    color: $muted$;
+    text-align: center;
+    user-select: none;
+}
+.mt-empty-state-icon { font-size: 40px; opacity: 0.35; }
+.mt-empty-state-title { font-size: 13px; font-weight: 500; color: $text$; opacity: 0.7; }
+.mt-empty-state-hint { font-size: 12px; color: $muted$; }
 
 /* ── Separator ─────────────────────────────────────────────── */
 .q-separator { background: $border$ !important; }
@@ -359,3 +375,12 @@ def pill(text: str, variant: str = "") -> None:
     """
     cls = f"mt-pill mt-pill-{variant}" if variant else "mt-pill"
     ui.html(f'<span class="{cls}">{_esc(text)}</span>')
+
+
+def empty_state(icon: str, title: str, hint: str) -> ui.element:
+    """Zentrierter Platzhalter für leere Tabs. Caller setzt .visible = False bei Aktivität."""
+    with ui.column().classes("mt-empty-state") as container:
+        ui.icon(icon).classes("mt-empty-state-icon")
+        ui.label(title).classes("mt-empty-state-title")
+        ui.label(hint).classes("mt-empty-state-hint")
+    return container

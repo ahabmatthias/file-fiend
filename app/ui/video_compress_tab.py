@@ -92,6 +92,11 @@ def build(shared: dict):
                     .props("outlined dense")
                 )
 
+    # ── Empty State ─────────────────────────────────────────────────
+    empty = theme.empty_state(
+        "movie", "Keine Vorschau", "Quell- und Zielordner wählen, dann Vorschau"
+    )
+
     # ── Status + Spinner ──────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-3"):
         spinner = theme.ember_spinner()
@@ -142,6 +147,7 @@ def build(shared: dict):
             ui.notify("Quell- und Zielordner dürfen nicht identisch sein.", type="negative")
             return
 
+        empty.visible = False
         spinner.visible = True
         status_label.set_text("Scanne …")
         preview_col.clear()
@@ -167,6 +173,7 @@ def build(shared: dict):
 
         if not result:
             status_label.set_text("Keine Video-Dateien im Quellordner gefunden.")
+            empty.visible = True
             return
 
         _state["preview"] = result
@@ -229,7 +236,7 @@ def build(shared: dict):
                 ui.html(table_html)
                 if len(result) > MAX_SHOWN:
                     ui.html(
-                        f'<div class="mt-hint" style="padding:6px 14px;">'
+                        f'<div class="mt-hint" style="padding:8px 16px;">'
                         f"… und {len(result) - MAX_SHOWN} weitere</div>"
                     )
 

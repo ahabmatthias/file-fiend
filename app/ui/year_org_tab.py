@@ -31,6 +31,9 @@ def build(shared: dict):
             "Dateien ohne EXIF landen im Ordner 'Sonstige'."
         )
 
+    # ── Empty State ─────────────────────────────────────────────────
+    empty = theme.empty_state("layers", "Keine Vorschau", "Ordner wählen und Vorschau drücken")
+
     # ── Status + Spinner ───────────────────────────────────────────
     with ui.row().classes("items-center gap-3 mt-2"):
         spinner = theme.ember_spinner()
@@ -77,6 +80,7 @@ def build(shared: dict):
             return
 
         group_by_camera = camera_checkbox.value
+        empty.visible = False
         spinner.visible = True
         status_label.set_text("Scanne …")
         preview_col.clear()
@@ -125,6 +129,7 @@ def build(shared: dict):
 
         if not result["files_by_year"]:
             status_label.set_text("Keine Dateien mit erkennbarem Jahr gefunden.")
+            empty.visible = True
             return
 
         _state["scan"] = result
@@ -146,7 +151,7 @@ def build(shared: dict):
                         cam_dict = result["files_by_year"][year]
                         total_in_year = sum(len(v) for v in cam_dict.values())
                         ui.html(
-                            f'<div style="padding:6px 14px;color:{theme.COLORS["text"]};'
+                            f'<div style="padding:8px 16px;color:{theme.COLORS["text"]};'
                             f"font-family:Menlo,monospace;font-size:12px;"
                             f'font-weight:600;">'
                             f'{year}/ <span style="color:{theme.COLORS["muted"]};font-weight:400;">'
@@ -155,7 +160,7 @@ def build(shared: dict):
                         for camera in sorted(cam_dict.keys()):
                             count = len(cam_dict[camera])
                             ui.html(
-                                f'<div style="padding:3px 14px 3px 32px;'
+                                f'<div style="padding:4px 16px 4px 32px;'
                                 f"font-family:Menlo,monospace;font-size:11px;"
                                 f'color:{theme.COLORS["muted"]};">└─ {escape(camera)}'
                                 f'<span style="color:{theme.COLORS["accent"]};margin-left:8px;">'
@@ -166,7 +171,7 @@ def build(shared: dict):
                     for year in sorted(result["files_by_year"].keys()):
                         files = result["files_by_year"][year]
                         ui.html(
-                            f'<div style="padding:6px 14px;'
+                            f'<div style="padding:8px 16px;'
                             f"font-family:Menlo,monospace;font-size:12px;"
                             f'color:{theme.COLORS["text"]};border-bottom:1px solid {theme.COLORS["surface"]};">'
                             f'{year}/ <span style="color:{theme.COLORS["accent"]};">→</span> '
@@ -181,13 +186,13 @@ def build(shared: dict):
                     )
                     for inv in result["invalid_files"][:10]:
                         ui.html(
-                            f'<div style="padding:3px 14px;'
+                            f'<div style="padding:4px 16px;'
                             f'font-family:Menlo,monospace;font-size:11px;'
                             f'color:{theme.COLORS["muted"]};">{escape(inv["path"].name)}</div>'
                         )
                     if len(result["invalid_files"]) > 10:
                         ui.html(
-                            f'<div class="mt-hint" style="padding:3px 14px;">'
+                            f'<div class="mt-hint" style="padding:4px 16px;">'
                             f'… und {len(result["invalid_files"]) - 10} weitere</div>'
                         )
 
@@ -199,7 +204,7 @@ def build(shared: dict):
                     )
                     for c in result["conflicts"][:5]:
                         ui.html(
-                            f'<div style="padding:3px 14px;'
+                            f'<div style="padding:4px 16px;'
                             f'font-family:Menlo,monospace;font-size:11px;'
                             f'color:{theme.COLORS["danger"]};">{c["filename"]} (Jahr {c["year"]})</div>'
                         )
