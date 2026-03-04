@@ -22,8 +22,8 @@ docs/
 todos/
 .claude/
 
-# Assets (source PNGs, not build icons)
-assets/alternate/
+# Assets (keep alternate/ tracked, ignore dev-only source files)
+assets/alternate/.DS_Store
 
 # Test data
 test_files*/

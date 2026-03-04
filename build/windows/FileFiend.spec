@@ -25,6 +25,7 @@ _engineio_d, _engineio_b, _engineio_h = collect_all("engineio")
 datas = [
     (str(nicegui_path), "nicegui"),
     (str(pymediainfo_path), "pymediainfo"),
+    (str(ROOT / "assets" / "alternate"), "assets/alternate"),
     *_socketio_d,
     *_engineio_d,
 ]

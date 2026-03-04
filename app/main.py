@@ -12,7 +12,11 @@ multiprocessing.freeze_support()
 from nicegui import app as nicegui_app  # noqa: E402
 from nicegui import ui  # noqa: E402
 
-from app.core.runtime import setup_path  # noqa: E402
+# ── Static asset mount (absolute path for PyInstaller compatibility) ──
+from app.core.runtime import (  # noqa: E402
+    is_frozen,
+    setup_path,
+)
 from app.ui import (  # noqa: E402
     duplicates_tab,
     renamer_tab,
@@ -22,9 +26,14 @@ from app.ui import (  # noqa: E402
 )
 from app.ui.utils import pick_folder  # noqa: E402
 
-# ── Static asset mount (absolute path for PyInstaller compatibility) ──
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
-nicegui_app.add_static_files("/assets", str(_PROJECT_ROOT / "assets" / "alternate"))
+if is_frozen():
+    import sys
+
+    _ASSETS_DIR = Path(sys._MEIPASS) / "assets" / "alternate"  # type: ignore[attr-defined]
+else:
+    _ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets" / "alternate"
+if _ASSETS_DIR.is_dir():
+    nicegui_app.add_static_files("/assets", str(_ASSETS_DIR))
 
 
 @ui.page("/")
