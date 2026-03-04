@@ -230,5 +230,5 @@ def build(shared: dict):
         "Ausgewählte löschen",
         on_click=do_delete,
         icon="delete",
-    ).classes("mt-btn-danger").props("flat no-caps")
+    ).classes("mt-btn-danger mt-2").props("flat no-caps")
     ui.label("Tipp: Vorher Backup erstellen!").classes("mt-hint mt-1")

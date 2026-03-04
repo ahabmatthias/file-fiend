@@ -202,7 +202,7 @@ def build(shared: dict):
             on_click=do_rename,
             icon="drive_file_rename_outline",
         )
-        .classes("mt-btn-success")
+        .classes("mt-btn-success mt-2")
         .props("color=positive no-caps")
     )
     btn_rename.disable()
