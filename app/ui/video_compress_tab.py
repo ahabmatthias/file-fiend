@@ -26,7 +26,7 @@ _ACTION_TAG = {
 def build(shared: dict):
     """Baut den Video-Komprimierungs-Tab – wird innerhalb eines tab_panel aufgerufen."""
     # ── Optionen ──────────────────────────────────────────────────
-    with ui.element("div").classes("mt-card w-full"):
+    with ui.element("div").classes("mt-card w-full mt-2"):
         ui.html('<div class="mt-card-header">Optionen</div>')
         with ui.column().classes("w-full gap-2 p-3"):
             with ui.row().classes("w-full items-center gap-2"):
@@ -93,16 +93,18 @@ def build(shared: dict):
                 )
 
     # ── Status + Spinner ──────────────────────────────────────────
-    with ui.row().classes("items-center gap-3 mt-3"):
+    with ui.row().classes("items-center gap-3 mt-2") as status_row:
         spinner = theme.ember_spinner()
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
+    status_row.visible = False
 
     # ── Pills-Zeile ───────────────────────────────────────────────
     pills_row = ui.row().classes("items-center gap-2 mt-1")
     pills_row.visible = False
 
     preview_col = ui.column().classes("w-full gap-0 mt-2")
+    preview_col.visible = False
     _state: dict = {"preview": None, "source": None, "target": None, "config": None}
 
     def _show_preview_pills(n_compress: int, n_skip: int, n_copy: int, n_exists: int = 0):
@@ -142,9 +144,11 @@ def build(shared: dict):
             ui.notify("Quell- und Zielordner dürfen nicht identisch sein.", type="negative")
             return
 
+        status_row.visible = True
         spinner.visible = True
         status_label.set_text("Scanne …")
         preview_col.clear()
+        preview_col.visible = False
         pills_row.visible = False
         _state["preview"] = None
         btn_execute.disable()
@@ -224,6 +228,7 @@ def build(shared: dict):
             "</div>"
         )
 
+        preview_col.visible = True
         with preview_col:
             with ui.element("div").classes("mt-card"):
                 ui.html('<div class="mt-card-header">Vorschau</div>')
@@ -236,7 +241,7 @@ def build(shared: dict):
 
         btn_execute.enable()
 
-    ui.button("Vorschau", on_click=do_preview, icon="preview").classes("mt-btn-primary mt-3").props(
+    ui.button("Vorschau", on_click=do_preview, icon="preview").classes("mt-btn-primary mt-2").props(
         "no-caps"
     )
 
@@ -251,9 +256,11 @@ def build(shared: dict):
         target = _state["target"]
         config = _state["config"]
 
+        status_row.visible = True
         spinner.visible = True
         btn_execute.disable()
         preview_col.clear()
+        preview_col.visible = False
         pills_row.visible = False
         await asyncio.sleep(0)
 
@@ -301,6 +308,7 @@ def build(shared: dict):
                 theme.pill(f"{result['failed']} Fehler", "danger")
 
         if result.get("error_details"):
+            preview_col.visible = True
             with preview_col:
                 with ui.element("div").classes("mt-card w-full"):
                     ui.html('<div class="mt-card-header">Fehler</div>')

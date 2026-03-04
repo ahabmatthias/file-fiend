@@ -18,7 +18,7 @@ _executor = ThreadPoolExecutor(max_workers=1)
 def build(shared: dict):
     """Baut den Jahr-Organisations-Tab – wird innerhalb eines tab_panel aufgerufen."""
     # ── Optionen ────────────────────────────────────────────────────
-    with ui.row().classes("items-center gap-4 flex-wrap mt-1 mt-filter-cbs"):
+    with ui.row().classes("items-center gap-4 flex-wrap mt-2 mt-filter-cbs"):
         cb_fotos = ui.checkbox("Fotos", value=True)
         cb_videos = ui.checkbox("Videos", value=True)
     with ui.row().classes("items-center gap-2 mt-1"):
@@ -31,10 +31,11 @@ def build(shared: dict):
         )
 
     # ── Status + Spinner ───────────────────────────────────────────
-    with ui.row().classes("items-center gap-3 mt-2"):
+    with ui.row().classes("items-center gap-3 mt-2") as status_row:
         spinner = theme.ember_spinner()
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
+    status_row.visible = False
 
     progress_bar = ui.linear_progress(value=0, show_value=False).classes("mt-progress")
     progress_bar.visible = False
@@ -44,6 +45,7 @@ def build(shared: dict):
     pills_row.visible = False
 
     preview_col = ui.column().classes("w-full gap-0 mt-2")
+    preview_col.visible = False
     _state: dict = {"scan": None, "folder": None, "extensions": None}
 
     def _show_pills(years: int, invalid: int, conflicts: int):
@@ -77,9 +79,11 @@ def build(shared: dict):
 
         group_by_camera = camera_checkbox.value
 
+        status_row.visible = True
         spinner.visible = True
         status_label.set_text("Scanne …")
         preview_col.clear()
+        preview_col.visible = False
         pills_row.visible = False
         _state["scan"] = None
         _state["folder"] = None
@@ -139,6 +143,7 @@ def build(shared: dict):
             len(result["conflicts"]),
         )
 
+        preview_col.visible = True
         with preview_col:
             with ui.element("div").classes("mt-card"):
                 if group_by_camera:
@@ -220,10 +225,12 @@ def build(shared: dict):
         if not _state.get("scan") or not folder:
             return
 
+        status_row.visible = True
         spinner.visible = True
         status_label.set_text("Organisiere …")
         btn_execute.disable()
         preview_col.clear()
+        preview_col.visible = False
         pills_row.visible = False
         progress_bar.set_value(0)
         progress_bar.visible = True

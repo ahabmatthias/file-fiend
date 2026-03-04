@@ -19,21 +19,23 @@ _executor = ThreadPoolExecutor(max_workers=1)
 
 def build(shared: dict):
     """Baut den Media-Renamer-Tab – wird innerhalb eines tab_panel aufgerufen."""
-    with ui.row().classes("items-center gap-4 flex-wrap mt-filter-cbs"):
+    with ui.row().classes("items-center gap-4 flex-wrap mt-2 mt-filter-cbs"):
         cb_fotos = ui.checkbox("Fotos", value=True)
         cb_videos = ui.checkbox("Videos", value=True)
 
     # ── Status + Spinner ───────────────────────────────────────────
-    with ui.row().classes("items-center gap-3 mt-2"):
+    with ui.row().classes("items-center gap-3 mt-2") as status_row:
         spinner = theme.ember_spinner()
         spinner.visible = False
         status_label = ui.label("").classes("mt-hint")
+    status_row.visible = False
 
     # ── Pills-Zeile (wird nach Scan / Ausführen befüllt) ──────────
     pills_row = ui.row().classes("items-center gap-2 mt-1")
     pills_row.visible = False
 
     preview_col = ui.column().classes("w-full gap-0 mt-2")
+    preview_col.visible = False
     _state: dict = {"files": None, "has_preview": False}
 
     def _show_pills(renames: int, unchanged: int, errors: int):
@@ -65,9 +67,11 @@ def build(shared: dict):
             status_label.set_text("Bitte mindestens einen Dateityp wählen.")
             return
 
+        status_row.visible = True
         spinner.visible = True
         status_label.set_text("Scanne …")
         preview_col.clear()
+        preview_col.visible = False
         pills_row.visible = False
         _state["files"] = None
         _state["has_preview"] = False
@@ -101,6 +105,7 @@ def build(shared: dict):
         if all_changes:
             _state["has_preview"] = True
             btn_rename.enable()
+            preview_col.visible = True
             with preview_col:
                 with ui.element("div").classes("mt-card"):
                     ui.html('<div class="mt-card-header">Vorschau</div>')
@@ -129,10 +134,12 @@ def build(shared: dict):
 
     # ── Umbenennen ─────────────────────────────────────────────────
     async def _execute_rename():
+        status_row.visible = True
         spinner.visible = True
         status_label.set_text("Benenne um …")
         btn_rename.disable()
         preview_col.clear()
+        preview_col.visible = False
         pills_row.visible = False
         await asyncio.sleep(0)
 
@@ -149,6 +156,7 @@ def build(shared: dict):
         _show_pills(0, total, results["errors"])
 
         if results.get("error_details"):
+            preview_col.visible = True
             with preview_col:
                 with ui.element("div").classes("mt-card"):
                     ui.html('<div class="mt-card-header">Fehler</div>')
