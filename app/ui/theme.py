@@ -260,7 +260,14 @@ body .q-btn.disabled, body .q-btn[disabled] { opacity: 0.35 !important; }
 .q-checkbox__inner--indet  .q-checkbox__bg { background: $accent$ !important; border-color: $accent$ !important; }
 .q-checkbox__bg { border-color: $muted$ !important; }
 .q-checkbox__label { color: $muted$ !important; font-size: 12px !important; }
-.mt-filter-cbs .q-checkbox { min-width: 75px; }
+.mt-filter-cbs {
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: 1fr !important;
+    gap: 0 !important;
+    max-width: 280px;
+}
+.mt-filter-cbs .q-checkbox { padding: 0 !important; margin: 0 !important; }
 
 /* ── Select / Number inputs ────────────────────────────────── */
 .q-select .q-field__control { background: $surface2$ !important; }
