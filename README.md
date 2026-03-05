@@ -19,6 +19,12 @@ Built with [NiceGUI](https://nicegui.io) + [pywebview](https://pywebview.flowrl.
 
 Grab the latest build from [Releases](https://github.com/ahabmatthias/file-fiend/releases) — pre-built for macOS (Apple Silicon) and Windows.
 
+**macOS Gatekeeper:** The app is not signed with an Apple Developer certificate. After downloading, remove the quarantine attribute before launching:
+
+```bash
+xattr -cr /path/to/FileFiend.app
+```
+
 ## Run from Source
 
 Requires Python 3.10+ and optionally [ffmpeg](https://ffmpeg.org/) on your PATH for video compression.
