@@ -1,0 +1,11 @@
+project: "FileFiend"
+last_session: 2026-03-28
+tech_stack:
+  - python
+  - nicegui
+  - pywebview
+  - pyinstaller
+  - github-actions
+history:
+  - date: 2026-03-28
+    summary: "Session-Start: PROJECT_STATUS.yaml von Template-Format auf neues History-Format migriert. Letzte Commits waren UI-Spacing-Fixes (CSS Grid Checkboxen, Tab-Abstände) und Build-Fix für fehlende Assets."
